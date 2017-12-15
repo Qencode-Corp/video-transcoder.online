@@ -4,17 +4,313 @@
     <meta charset="UTF-8">
     <title>video-transcoder.online</title>
     <script src="https://code.jquery.com/jquery-3.2.1.min.js"></script>
+    <script src="tus.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/2.2.8/shaka-player.compiled.js"></script>
+    <script src="qencode.js"></script>
+    <link rel="stylesheet" href="progress-bar.css"/>
+    <style>
+        .form {
+            width: 100%;
+        }
+        .form-element {
+            width: 50%;
+        }
+        .form-element-2 {
+            width: 23%;
+        }
+        .invisible {
+            display: none;
+        }
+        .col-2 {
+            float: left;
+            width: 50%;
+        }
+    </style>
 </head>
 <body>
-<span><b>Token:</b></span><span id="token"></span>
+<div class="form">
+    <div class="col-2">
+        <div>Choose file</div>
+        <div>
+            <input type="file" name="file">
+        </div>
+        <div>Or insert URL</div>
+        <div>
+            <input type="text" id="video_url" class="form-element" value="https://qa.stagevids.com/static/1.mp4"/>
+        </div>
+        <div>Output Format</div>
+        <div>
+            <select id="output_format" class="form-element" onchange="load_codecs()">
+                <option value="mp4">MP4</option>
+                <option value="advanced_hls">HLS</option>
+                <option value="advanced_dash">MPEG - DASH</option>
+                <option value="webm">WEBM</option>
+            </select>
+        </div>
+        <div>Video Codec</div>
+        <div>
+            <select id="video_codec" class="form-element">
+                <option value="libx264">H.264 (MPEG-4 Part 10)</option>
+                <option value="libx265">H.265 (MPEG-H PART2/HEVC)</option>
+            </select>
+        </div>
+        <div>Destination</div>
+        <div>
+            <input type="text" id="destination" class="form-element"/>
+        </div>
+        <div>Size</div>
+        <div>
+            <input type="text" id="size_w" class="form-element-2" value="320"/> x
+            <input type="text" id="size_h" class="form-element-2" value="240"/>
+        </div>
+        <div>Rotate</div>
+        <div>
+            <input type="text" id="rotate" class="form-element" value="90"/>
+        </div>
+        <div>Framerate</div>
+        <div>
+            <input type="text" id="framerate" class="form-element" value="25"/>
+        </div>
+        <div>Bitrate</div>
+        <div>
+            <input type="text" id="bitrate" class="form-element" value="300"/>
+        </div>
+        <div>Pix Format</div>
+        <div>
+            <input type="text" id="pix_format" class="form-element" value="yuv420p"/>
+        </div>
+        <div>Audio Codec</div>
+        <div>
+            <select id="audio_codec" class="form-element">
+                <option value="aac">AAC</option>
+            </select>
+        </div>
+        <div>Audio Bitrate</div>
+        <div>
+            <input type="text" id="audio_bitrate" class="form-element" value="64"/>
+        </div>
+        <div>Audio Sample Rate</div>
+        <div>
+            <input type="text" id="audio_sample_rate" class="form-element" value="44100"/>
+        </div>
+        <div id="segment_duration_block" class="invisible">
+            <div>Segment Duration</div>
+            <div>
+                <input type="text" id="segment_duration" class="form-element" value="8"/>
+            </div>
+        </div>
+        <div id="keyframe_block" class="invisible">
+            <div>Keyframe</div>
+            <div>
+                <input type="text" id="keyframe" class="form-element" value="60"/>
+            </div>
+        </div>
+
+        <div>
+            <button id="btn_ok" class="form-element">OK</button>
+        </div>
+    </div>
+
+    <div class="col-2">
+        <div class="progress-striped active">
+            <div class="progress-bar" id="bar" style="height: 20px;"></div>
+        </div>
+        <div class="player-container">
+            <!--<video id="video"
+                   width="640"
+                   poster="//shaka-player-demo.appspot.com/assets/poster.jpg"
+                   controls autoplay></video>-->
+            <video id="video"
+                   width="640"
+                   controls autoplay></video>
+        </div>
+    </div>
+</div>
 </body>
 
 <script>
-    $(document).ready(function(){
-            $.get("/backend/get_access_token.php", function(data, status){
-                console.log(data);
-                $("#token").text(data);
+    var webm_codecs = {
+        "VP8": "libvpx",
+        "VP9": "libvpx-vp9"
+    };
+
+    var codecs = {
+        "H.264 (MPEG-4 Part 10)": "libx264",
+        "H.265 (MPEG-H PART2/HEVC)": "libx265"
+    };
+
+    var webm_audio = {
+        "Vorbis": "vorbis"
+    };
+
+    var audio = {
+        "AAC": "aac"
+    };
+    load_codecs = function () {
+        var $el2 = $("#audio_codec");
+        $el2.empty();
+        var $el = $("#video_codec");
+        $el.empty();
+        var output_format = $("#output_format option:selected").val();
+        if (output_format == 'webm') {
+            $.each(webm_codecs, function (key, value) {
+                $el.append($("<option></option>")
+                    .attr("value", value).text(key));
             });
+            $.each(webm_audio, function (key, value) {
+                $el2.append($("<option></option>")
+                    .attr("value", value).text(key));
+            });
+        } else {
+            $.each(codecs, function (key, value) {
+                $el.append($("<option></option>")
+                    .attr("value", value).text(key));
+            });
+            $.each(audio, function (key, value) {
+                $el2.append($("<option></option>")
+                    .attr("value", value).text(key));
+            });
+            if (output_format != "advanced_hls") {
+                $("#segment_duration_block").addClass("invisible");
+                $("#keyframe_block").addClass("invisible");
+            } else {
+                $("#segment_duration_block").removeClass("invisible");
+                $("#keyframe_block").removeClass("invisible");
+            }
+        }
+    }
+
+    var token = '';
+    $.get("/backend/get_access_token.php", function (data, status) {
+        token = data;
     });
+
+    $.file = '';
+
+    $("input[type=file]").on("change", function () {
+        $.file = this.files[0];
+    });
+
+    //var manifestUri = '';
+
+    $("#btn_ok").click(
+        function () {
+            var file_encode = false;
+            if (token != '') {
+                var output_format = $("#output_format option:selected").val();
+
+                var format = {
+                    "output": $("#output_format option:selected").val(),
+                    "destination": $("#destination").val()
+                };
+
+                if (output_format == "advanced_hls" || output_format == "advanced_dash") {
+                    var stream = {
+                        "size": $("#size_w").val() + "x" + $("#size_h").val(),
+                        "rotate": $("#rotate").val(),
+                        "framerate": $("#framerate").val(),
+                        "bitrate": $("#bitrate").val(),
+                        "pix_format": $("#pix_format").val(),
+                        "video_codec": $("#video_codec option:selected").val(),
+                        "audio_codec": $("#audio_codec option:selected").val(),
+                        "audio_bitrate": $("#audio_bitrate").val(),
+                        "audio_sample_rate": $("#audio_sample_rate").val()
+                    };
+                    if (output_format == "advanced_hls") {
+                        stream['keyframe'] = $("#keyframe").val();
+                        format["segment_duration"] = $("#segment_duration").val();
+                    }
+                    format["stream"] = [stream];
+                } else {
+                    format["size"] = $("#size_w").val() + "x" + $("#size_h").val();
+                    format["rotate"] = $("#rotate").val();
+                    format["framerate"] = $("#framerate").val();
+                    format["bitrate"] = $("#bitrate").val();
+                    format["pix_format"] = $("#pix_format").val();
+                    format["video_codec"] = $("#video_codec option:selected").val();
+                    format["audio_codec"] = $("#audio_codec option:selected").val();
+                    format["audio_bitrate"] = $("#audio_bitrate").val();
+                    format["audio_sample_rate"] = $("#audio_sample_rate").val();
+                }
+                if ($.file == '') {
+                    file_encode = false;
+                    var data = {
+                        "query": {
+                            "source": $("#video_url").val(),
+                            "format": [format]
+                        }
+                    };
+                } else {
+                    file_encode = true;
+                    var data = {
+                        "query": {
+                            "file": $.file,
+                            "format": [format]
+                        }
+                    };
+                }
+                var qencode = new Qencode(token, data);
+                qencode.start_encode(function (response2){
+                    if (!response2.error) {
+                        qencode.status({
+                            token: response2.task_token,
+                            url: response2.status_url
+                        }, function (response) {
+                            var status = response.statuses[response2.task_token].status;
+                            status = status.charAt(0).toUpperCase() + status.slice(1);
+                            var percent = response.statuses[response2.task_token].percent;
+                            if(percent == 0){
+                                $('.progress-bar').css("width", percent + "%").text("Starting");
+                            }else {
+                                $('.progress-bar').css("width", percent + "%").text(status + ": " + percent.toFixed(2) + " %");
+
+                                if (percent == 100 && status == "completed" && response.statuses[response2.task_token].videos.length > 0) {
+                                    var manifestUri = response.statuses[response2.task_token].videos[0].url;
+                                    console.log(manifestUri);
+                                    initApp(manifestUri);
+                                }
+                            }
+                        });
+                    }
+                },
+                function(response1) {
+                    var percentage = response1.percentage;
+                    if (percentage <= 0) {
+                        $('.progress-bar').css("width", percentage + "%").text("Starting");
+                    } else {
+                        $('.progress-bar').css("width", percentage + "%").text("Uploading: " + percentage + " %");
+                    }
+                });
+            }
+        }
+    );
+
+    function initApp(url) {
+        shaka.polyfill.installAll();
+        if (shaka.Player.isBrowserSupported()) {
+            initPlayer(url);
+        } else {
+            console.error('Browser not supported!');
+        }
+    }
+
+    function initPlayer(url) {
+        console.log(url);
+        var video = document.getElementById('video');
+        var player = new shaka.Player(video);
+        window.player = player;
+        player.addEventListener('error', onErrorEvent);
+        player.load(url).then(function() {
+            console.log('The video has now been loaded!');
+        }).catch(onError);
+    }
+
+    function onErrorEvent(event) {
+        onError(event.detail);
+    }
+
+    function onError(error) {
+        console.error('Error code', error.code, 'object', error);
+    }
 </script>
 </html>

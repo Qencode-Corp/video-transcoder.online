@@ -1,12 +1,12 @@
 <?php
-
-$result = curl_request("https://api-qa.qencode.com/v1/access_token", "api_key=5a1d8a395cca6");
+$api_key = "5a1d8a395cca6";
+$api = "https://api-qa.qencode.com";
+$result = curl_request("$api/v1/access_token", "api_key=$api_key");
 $decode = json_decode($result);
 $token = $decode->{'token'};
 echo $token;
 
-function curl_request($url, $params)
-{
+function curl_request($url, $params){
     $ch = curl_init();
     curl_setopt($ch, CURLOPT_URL, $url);
     curl_setopt($ch, CURLOPT_POST, 1);
