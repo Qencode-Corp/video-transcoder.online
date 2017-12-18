@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>player video-transcoder.online</title>
+    <script src="https://code.jquery.com/jquery-3.2.1.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/2.2.8/shaka-player.compiled.js"></script>
+    <style>
+        .form {
+            width: 100%;
+        }
+        .form-element {
+            width: 50%;
+        }
+        .col-2 {
+            float: left;
+            width: 50%;
+        }
+    </style>
+</head>
+<body>
+<div class="form">
+    <div class="col-2">
+        <div>Video URL</div>
+        <div>
+            <input type="text" id="video_url" class="form-element" />
+        </div>
+        <div>
+            <button id="btn_play" class="form-element">Play</button>
+        </div>
+        <div class="player-container">
+            <video id="video"
+                   width="640"
+                   controls autoplay></video>
+        </div>
+    </div>
+</div>
+</body>
+
+<script>
+    $("#btn_play").click(
+        function () {
+            var manifestUri = $('#video_url').val();
+            if(manifestUri != '') {
+                initApp(manifestUri);
+            }
+        }
+    );
+
+    function initApp(url) {
+        shaka.polyfill.installAll();
+        if (shaka.Player.isBrowserSupported()) {
+            initPlayer(url);
+        } else {
+            console.error('Browser not supported!');
+        }
+    }
+
+    function initPlayer(url) {
+        var video = document.getElementById('video');
+        var player = new shaka.Player(video);
+        window.player = player;
+        player.addEventListener('error', onErrorEvent);
+        player.load(url).then(function() {
+            console.log('The video has now been loaded!');
+        }).catch(onError);
+    }
+
+    function onErrorEvent(event) {
+        onError(event.detail);
+    }
+
+    function onError(error) {
+        console.error('Error code', error.code, 'object', error);
+    }
+</script>
+</html>
