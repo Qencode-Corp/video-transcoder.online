@@ -256,15 +256,14 @@
                             token: response2.task_token,
                             url: response2.status_url
                         }, function (response) {
-                            var status = response.statuses[response2.task_token].status;
-                            status = status.charAt(0).toUpperCase() + status.slice(1);
+                            var status_or = response.statuses[response2.task_token].status;
+                            var status = status_or.charAt(0).toUpperCase() + status_or.slice(1);
                             var percent = response.statuses[response2.task_token].percent;
                             if(percent == 0){
                                 $('.progress-bar').css("width", percent + "%").text("Starting");
                             }else {
                                 $('.progress-bar').css("width", percent + "%").text(status + ": " + percent.toFixed(2) + " %");
-
-                                if (percent == 100 && status == "completed" && response.statuses[response2.task_token].videos.length > 0) {
+                                if (/*percent == 100 && */status_or == "completed" && response.statuses[response2.task_token].videos.length > 0) {
                                     var manifestUri = response.statuses[response2.task_token].videos[0].url;
                                     console.log(manifestUri);
                                     initApp(manifestUri);
