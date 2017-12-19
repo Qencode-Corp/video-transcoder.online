@@ -25,6 +25,13 @@
             float: left;
             width: 50%;
         }
+        #video{
+            width: 100%;
+            display: none;
+        }
+        .progress-striped{
+            width: 100%;
+        }
     </style>
 </head>
 <body>
@@ -113,16 +120,11 @@
 
     <div class="col-2">
         <div class="progress-striped active">
+            <div class="progress-bar-0" id="bar-0" style="height: 20px;"></div>
             <div class="progress-bar" id="bar" style="height: 20px;"></div>
         </div>
         <div class="player-container">
-            <!--<video id="video"
-                   width="640"
-                   poster="//shaka-player-demo.appspot.com/assets/poster.jpg"
-                   controls autoplay></video>-->
-            <video id="video"
-                   width="640"
-                   controls autoplay></video>
+            <video id="video" controls autoplay></video>
         </div>
     </div>
 </div>
@@ -191,14 +193,10 @@
         $.file = this.files[0];
     });
 
-    //var manifestUri = '';
-
     $("#btn_ok").click(
         function () {
-            var file_encode = false;
             if (token != '') {
                 var output_format = $("#output_format option:selected").val();
-
                 var format = {
                     "output": $("#output_format option:selected").val(),
                     "destination": $("#destination").val()
@@ -233,7 +231,6 @@
                     format["audio_sample_rate"] = $("#audio_sample_rate").val();
                 }
                 if ($.file == '') {
-                    file_encode = false;
                     var data = {
                         "query": {
                             "source": $("#video_url").val(),
@@ -241,7 +238,6 @@
                         }
                     };
                 } else {
-                    file_encode = true;
                     var data = {
                         "query": {
                             "file": $.file,
@@ -260,15 +256,29 @@
                             var status = status_or.charAt(0).toUpperCase() + status_or.slice(1);
                             var percent = response.statuses[response2.task_token].percent;
                             if(percent == 0){
-                                $('.progress-bar').css("width", percent + "%").text("Starting");
+                                $('.progress-bar').hide();
+                                $('.progress-bar-0').show();
+                                $('.progress-bar-0').css("width", "100%").text(status + ": 0%");
                             }else {
+                                $('.progress-bar-0').hide();
+                                $('.progress-bar').show();
                                 $('.progress-bar').css("width", percent + "%").text(status + ": " + percent.toFixed(2) + " %");
-                                if (/*percent == 100 && */status_or == "completed" && response.statuses[response2.task_token].videos.length > 0) {
+                                if (status_or == "completed" && response.statuses[response2.task_token].videos.length > 0) {
                                     var manifestUri = response.statuses[response2.task_token].videos[0].url;
-                                    console.log(manifestUri);
-                                    initApp(manifestUri);
+                                    $('#video').css("display", "block");
+                                    if (output_format == 'mp4'){
+                                        var video = $('#video')[0];
+                                        video.src = manifestUri;
+                                        video.load();
+                                        video.play();
+                                    }else{
+                                        initApp(manifestUri);
+                                    }
                                 }
                             }
+
+
+
                         });
                     }
                 },
@@ -284,7 +294,7 @@
         }
     );
 
-    /*function initApp(url) {
+    function initApp(url) {
         shaka.polyfill.installAll();
         if (shaka.Player.isBrowserSupported()) {
             initPlayer(url);
@@ -309,53 +319,8 @@
 
     function onError(error) {
         console.error('Error code', error.code, 'object', error);
-    }*/
-
-    var manifestUri = 'https://qa.stagevids.com/static/tests/hls4/';
-
-    function initApp() {
-        // Install built-in polyfills to patch browser incompatibilities.
-        shaka.polyfill.installAll();
-
-        // Check to see if the browser supports the basic APIs Shaka needs.
-        if (shaka.Player.isBrowserSupported()) {
-            // Everything looks good!
-            initPlayer();
-        } else {
-            // This browser does not have the minimum set of APIs we need.
-            console.error('Browser not supported!');
-        }
     }
 
-    function initPlayer() {
-        // Create a Player instance.
-        var video = document.getElementById('video');
-        var player = new shaka.Player(video);
 
-        // Attach player to the window to make it easy to access in the JS console.
-        window.player = player;
-
-        // Listen for error events.
-        player.addEventListener('error', onErrorEvent);
-
-        // Try to load a manifest.
-        // This is an asynchronous process.
-        player.load(manifestUri).then(function() {
-            // This runs if the asynchronous load is successful.
-            console.log('The video has now been loaded!');
-        }).catch(onError);  // onError is executed if the asynchronous load fails.
-    }
-
-    function onErrorEvent(event) {
-        // Extract the shaka.util.Error object from the event.
-        onError(event.detail);
-    }
-
-    function onError(error) {
-        // Log the error.
-        console.error('Error code', error.code, 'object', error);
-    }
-
-    document.addEventListener('DOMContentLoaded', initApp);
 </script>
 </html>
