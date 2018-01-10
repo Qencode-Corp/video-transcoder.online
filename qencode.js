@@ -172,7 +172,78 @@ var Qencode = (function () {
         this.task_token = '';
     }
 
-    Qencode.prototype.start_encode = function (callback/*_success*/, callback_process) {
+    Qencode.prototype.start_encode = function (callback) {
+        var token = this.options.token;
+        var create_task_response = _create_task(this.options.mainServer + '/v1/create_task', token);
+        this.task_token = create_task_response.task_token;
+        if (create_task_response.error){
+            callback(create_task_response);
+            return;
+        }
+
+        if (this.options.uri != undefined && this.options.uri != '' && this.options.uri != null )
+        {
+            var start_encode_response = _start_encode(this.options.mainServer + '/v1/start_encode',
+                this.task_token,
+                this.options.uri,
+                this.options.uri,
+                this.options.profile_ids,
+                this.options.transfer_method,
+                this.options.payload
+            );
+            this.masterServer = start_encode_response.status_url;
+            if (start_encode_response.error){
+                callback(start_encode_response);
+                return;
+            }
+            start_encode_response.task_token = this.task_token;
+            callback(start_encode_response);
+        }
+        else if(this.options.file != undefined && this.options.file != '' && this.options.file != null )
+        {
+            var upload_url = create_task_response.upload_url + '/' + this.task_token;
+            var task_token = this.task_token;
+            var profile_ids =  this.options.profile_ids;
+            var transfer_method = this.options.transfer_method;
+            var payload =  this.options.payload;
+            options = {
+                endpoint: upload_url,
+                retryDelays: [0, 1000, 3000, 5000],
+                metadata: {filename: this.options.file.name},
+                onProgress: function (bytesUploaded, bytesTotal) {
+                    console.log('tus uploading: ', bytesUploaded, bytesTotal);                },
+                onSuccess: function () {
+                    var url = tus_upload.url.split("/");
+                    var file_uuid = url[url.length - 1];
+                    var uri = 'tus:' + file_uuid;
+
+                    var start_encode_response = _start_encode(url3,
+                        task_token,
+                        file_uuid,
+                        uri,
+                        profile_ids,
+                        transfer_method,
+                        payload
+                    );
+
+                    if (start_encode_response.error){
+                        callback(start_encode_response);
+                        return;
+                    }
+                    start_encode_response.task_token = task_token;
+                    callback(start_encode_response);
+
+                }
+            };
+            _upload_file(this.options.file, options);
+        }
+        else
+        {
+            callback({error: true, message: 'file or url is required'});
+        }
+    };
+
+    Qencode.prototype.start_encode2 = function (callback/*_success*/, callback_process) {
         var token = this.options.token;
         var create_task_response = _create_task(this.options.mainServer + '/v1/create_task', token);
         this.task_token = create_task_response.task_token;

@@ -246,7 +246,7 @@
                     };
                 }
                 var qencode = new Qencode(token, data);
-                qencode.start_encode(function (response2){
+                qencode.start_encode2(function (response2){
                     if (!response2.error) {
                         qencode.status({
                             token: response2.task_token,
