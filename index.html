@@ -245,7 +245,11 @@
                         }
                     };
                 }
-                var qencode = new Qencode(token, data);
+                var options = {
+                    interval: 15,
+                    endpoint: 'https://api-qa.qencode.com'
+                };
+                var qencode = new Qencode(token, data, options);
                 qencode.start_encode2(function (response2){
                     if (!response2.error) {
                         qencode.status({

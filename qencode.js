@@ -1,8 +1,8 @@
 /* ========================================================================
- * Qencode: qencode.js v0.9.1
- * https://www.qencode.com/lib/eqncode.js
+ * Qencode: qencode.js v0.9.2
+ * https://www.qencode.com/lib/qencode.js
  * ========================================================================
- * Copyright 2016-2017 Qencode, Inc.
+ * Copyright 2016-2018 Qencode, Inc.
  * Licensed under MIT (https://www.qencode.com/lib/LICENSE)
  * ======================================================================== */
 
@@ -158,23 +158,27 @@ var Qencode = (function () {
 
     var defaultOptions = {
         interval: 15,
-        mainServer: 'https://api-qa.qencode.com'
+        endpoint: 'https://api-qa.qencode.com'
     };
 
     // --- lib ---
 
-    function Qencode(token, options) {
+    function Qencode(token, query, options) {
         _classCallCheck(this, Qencode);
-        this.options = defaultOptions;
+        if(options == undefined){
+            this.options = defaultOptions;
+        }else{
+            this.options = options;
+        }
         this.options.token = token;
-        this.options.query = options;
+        this.options.query = query;
         this.masterServer = '';
         this.task_token = '';
     }
 
     Qencode.prototype.start_encode = function (callback) {
         var token = this.options.token;
-        var create_task_response = _create_task(this.options.mainServer + '/v1/create_task', token);
+        var create_task_response = _create_task(this.options.endpoint + '/v1/create_task', token);
         this.task_token = create_task_response.task_token;
         if (create_task_response.error){
             callback(create_task_response);
@@ -183,7 +187,7 @@ var Qencode = (function () {
 
         if (this.options.uri != undefined && this.options.uri != '' && this.options.uri != null )
         {
-            var start_encode_response = _start_encode(this.options.mainServer + '/v1/start_encode',
+            var start_encode_response = _start_encode(this.options.endpoint + '/v1/start_encode',
                 this.task_token,
                 this.options.uri,
                 this.options.uri,
@@ -245,14 +249,14 @@ var Qencode = (function () {
 
     Qencode.prototype.start_encode2 = function (callback/*_success*/, callback_process) {
         var token = this.options.token;
-        var create_task_response = _create_task(this.options.mainServer + '/v1/create_task', token);
+        var create_task_response = _create_task(this.options.endpoint + '/v1/create_task', token);
         this.task_token = create_task_response.task_token;
         if (create_task_response.error){
             callback(create_task_response);
             return;
         }
         if (this.options.query.query.source != undefined && this.options.query.query.source != '' && this.options.query.query.source != null ) {
-            var start_encode_response = _start_encode2(this.options.mainServer + '/v1/start_encode2',
+            var start_encode_response = _start_encode2(this.options.endpoint + '/v1/start_encode2',
                 this.task_token,
                 this.options.query
             );
@@ -287,7 +291,7 @@ var Qencode = (function () {
                     var file_uuid = url[url.length - 1];
                     var uri = 'tus:' + file_uuid;
                     encode_options.query.query.source = uri;
-                    var start_encode_response = _start_encode2(encode_options.mainServer + '/v1/start_encode2',
+                    var start_encode_response = _start_encode2(encode_options.endpoint + '/v1/start_encode2',
                         task_token,
                         encode_options.query
                     );
