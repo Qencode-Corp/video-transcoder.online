@@ -206,7 +206,7 @@ var Qencode = (function () {
             var profile_ids =  this.options.profile_ids;
             var transfer_method = this.options.transfer_method;
             var payload =  this.options.payload;
-            options = {
+            var _options = {
                 endpoint: upload_url,
                 retryDelays: [0, 1000, 3000, 5000],
                 metadata: {filename: this.options.file.name},
@@ -226,7 +226,7 @@ var Qencode = (function () {
                         payload
                     );
 
-                    if (start_encode_response.error){
+                    if (start_encode_response.error == 1){
                         callback(start_encode_response);
                         return;
                     }
@@ -235,7 +235,7 @@ var Qencode = (function () {
 
                 }
             };
-            _upload_file(this.options.file, options);
+            _upload_file(this.options.file, _options);
         }
         else
         {
@@ -276,7 +276,6 @@ var Qencode = (function () {
                 retryDelays: [0, 1000, 3000, 5000],
                 metadata: {filename: encode_options.query.query.file.name},
                 onProgress: function (bytesUploaded, bytesTotal) {
-                    //console.log('tus uploading: ', bytesUploaded, bytesTotal);
                     var percentage = (bytesUploaded / bytesTotal * 100).toFixed(2);
                     var tus_upload_response = {
                         'percentage': percentage
@@ -287,20 +286,11 @@ var Qencode = (function () {
                     var url = tus_upload.url.split("/");
                     var file_uuid = url[url.length - 1];
                     var uri = 'tus:' + file_uuid;
-                    /*var start_encode_response = _start_encode(url3,
-                        task_token,
-                        file_uuid,
-                        uri,
-                        profile_ids,
-                        transfer_method,
-                        payload
-                    );*/
                     encode_options.query.query.source = uri;
                     var start_encode_response = _start_encode2(encode_options.mainServer + '/v1/start_encode2',
                         task_token,
                         encode_options.query
                     );
-                    //if (start_encode_response.error){
                     if (start_encode_response.error == 1){
                         callback(start_encode_response);
                         return;
