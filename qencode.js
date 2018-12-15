@@ -120,13 +120,14 @@ var Qencode = (function () {
         return call_server_post(url, data, null, true);
     }
 
-    function _start_encode(url, task_token, file_uuid, uri, profiles, transfer_method, payload) {
+    function _start_encode(url, task_token, file_uuid, uri, profiles, transfer_method, payload, output_path_variables) {
         var data = new FormData();
         data.append('task_token', task_token);
         data.append('tus', file_uuid);
         data.append('profiles', profiles.toString());
         data.append('uri', uri);
         data.append('payload', payload);
+        data.append('output_path_variables', output_path_variables);
         if(transfer_method != null){
             data.append('transfer_method', transfer_method);
         }
