@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>video-transcoder.online</title>
+    <script src="https://code.jquery.com/jquery-3.2.1.min.js"></script>
+    <script src="tus.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/2.2.8/shaka-player.compiled.js"></script>
+    <script src="qencode.js"></script>
+    <link rel="stylesheet" href="progress-bar.css"/>
+    <link rel="stylesheet" href="styles.css"/>
+</head>
+<body>
+<div class="form">
+    <div class="col-2">
+        <h2><a href="https://cloud.qencode.com">Qencode</a> Preset Job API Example:</h2>
+        <div>Choose file</div>
+        <div>
+            <input type="file" name="file">
+        </div>
+        <div>Or insert URL</div>
+        <div>
+            <input type="text" id="video_url" class="form-element" value="https://qa.qencode.com/static/1.mp4"/>
+        </div>
+        <div>Transcoding Profile ID(s)</div>
+        <div>
+            <input type="text" id="profiles" class="form-element" value="5a1d8a395cef4"/>
+        </div>
+        <div>Transfer method ID</div>
+        <div>
+            <input type="text" id="transfer_method" class="form-element"/>
+        </div>
+        <div>Output Path Variables</div>
+        <div>
+            <input type="text" id="output_path_variables" class="form-element"/>
+        </div>
+
+        <div>
+            <button id="btn_ok" class="form-element">OK</button>
+        </div>
+
+        <div>
+            <a href="/">See Custom Job API Example</a>
+        </div>
+    </div>
+
+    <div class="col-2">
+        <div class="progress-striped active">
+            <div class="progress-bar-0" id="bar-0" style="height: 20px;"></div>
+            <div class="progress-bar" id="bar" style="height: 20px;"></div>
+        </div>
+        <div class="player-container">
+            <video id="video" controls autoplay></video>
+        </div>
+    </div>
+</div>
+</body>
+
+<script src="common.js"></script>
+<script>
+    var qencode;
+    $("#btn_ok").click(
+        function () {
+            if (token != '') {
+                var data = {
+                    "profiles": $("#profiles").val()
+                };
+                var transfer_method = $("#transfer_method").val();
+                if (transfer_method) {
+                    data["transfer_method"] = transfer_method;
+                }
+                var output_path_variables = $("#output_path_variables").val();
+                if (output_path_variables) {
+                    data["output_path_variables"] = output_path_variables;
+                }
+                if ($.file == '') {
+                    data["uri"] = $("#video_url").val();
+                } else {
+                    data["file"] = $.file;
+                }
+
+                var options = {
+                    interval: 15, //status polling interval
+                    endpoint: 'https://api.qencode.com' //api endpoint
+                };
+                if (qencode) {
+                    clear_previous_job(qencode);
+                }
+                qencode = new Qencode(token, data, options);
+                qencode.start(function (start_response){
+                        if (!start_response.error) {
+                            qencode.status(
+                                {
+                                    token: start_response.task_token,
+                                    url: start_response.status_url
+                                },
+                                poll_job_status
+                            );
+                        }
+                    },
+                    update_upload_progress
+                );
+            }
+        }
+    );
+</script>
+</html>

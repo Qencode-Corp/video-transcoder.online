@@ -8,42 +8,19 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/2.2.8/shaka-player.compiled.js"></script>
     <script src="qencode.js"></script>
     <link rel="stylesheet" href="progress-bar.css"/>
-    <style>
-        .form {
-            width: 100%;
-        }
-        .form-element {
-            width: 50%;
-        }
-        .form-element-2 {
-            width: 23%;
-        }
-        .invisible {
-            display: none;
-        }
-        .col-2 {
-            float: left;
-            width: 50%;
-        }
-        #video{
-            width: 100%;
-            display: none;
-        }
-        .progress-striped{
-            width: 100%;
-        }
-    </style>
+    <link rel="stylesheet" href="styles.css"/>
 </head>
 <body>
 <div class="form">
     <div class="col-2">
+        <h2><a href="https://cloud.qencode.com">Qencode</a> Custom Job API Example:</h2>
         <div>Choose file</div>
         <div>
             <input type="file" name="file">
         </div>
         <div>Or insert URL</div>
         <div>
-            <input type="text" id="video_url" class="form-element" value="https://qa.stagevids.com/static/1.mp4"/>
+            <input type="text" id="video_url" class="form-element" value="https://qa.qencode.com/static/1.mp4"/>
         </div>
         <div>Output Format</div>
         <div>
@@ -65,20 +42,20 @@
         <div>
             <input type="text" id="destination" class="form-element"/>
         </div>
-        <div>Size</div>
+        <div>Size, px</div>
         <div>
             <input type="text" id="size_w" class="form-element-2" value="320"/> x
             <input type="text" id="size_h" class="form-element-2" value="240"/>
         </div>
-        <div>Rotate</div>
+        <div>Rotate, degrees</div>
         <div>
-            <input type="text" id="rotate" class="form-element" value="90"/>
+            <input type="text" id="rotate" class="form-element" value="0"/>
         </div>
         <div>Framerate</div>
         <div>
             <input type="text" id="framerate" class="form-element" value="25"/>
         </div>
-        <div>Bitrate</div>
+        <div>Bitrate, kbps</div>
         <div>
             <input type="text" id="bitrate" class="form-element" value="300"/>
         </div>
@@ -101,13 +78,13 @@
             <input type="text" id="audio_sample_rate" class="form-element" value="44100"/>
         </div>
         <div id="segment_duration_block" class="invisible">
-            <div>Segment Duration</div>
+            <div>Segment Duration, seconds</div>
             <div>
                 <input type="text" id="segment_duration" class="form-element" value="8"/>
             </div>
         </div>
         <div id="keyframe_block" class="invisible">
-            <div>Keyframe</div>
+            <div>Keyframe interval</div>
             <div>
                 <input type="text" id="keyframe" class="form-element" value="60"/>
             </div>
@@ -115,6 +92,10 @@
 
         <div>
             <button id="btn_ok" class="form-element">OK</button>
+        </div>
+
+        <div>
+            <a href="/start_encode.html">See Preset Job API Example</a>
         </div>
     </div>
 
@@ -130,6 +111,7 @@
 </div>
 </body>
 
+<script src="common.js"></script>
 <script>
     var webm_codecs = {
         "VP8": "libvpx",
@@ -180,19 +162,9 @@
                 $("#keyframe_block").removeClass("invisible");
             }
         }
-    }
+    };
 
-    var token = '';
-    $.get("/backend/get_access_token.php", function (data, status) {
-        token = data;
-    });
-
-    $.file = '';
-
-    $("input[type=file]").on("change", function () {
-        $.file = this.files[0];
-    });
-
+    var qencode;
     $("#btn_ok").click(
         function () {
             if (token != '') {
@@ -232,99 +204,40 @@
                 }
                 if ($.file == '') {
                     var data = {
-                        "query": {
-                            "source": $("#video_url").val(),
-                            "format": [format]
-                        }
+                        "source": $("#video_url").val(),
+                        "format": [format]
                     };
                 } else {
                     var data = {
-                        "query": {
-                            "file": $.file,
-                            "format": [format]
-                        }
+                        "file": $.file,
+                        "format": [format]
                     };
                 }
+
                 var options = {
-                    interval: 15,
-                    endpoint: 'https://api.qencode.com'
+                    interval: 15, //status polling interval
+                    endpoint: 'https://api-qa.qencode.com' //api endpoint
                 };
-                var qencode = new Qencode(token, data, options);
-                qencode.start_encode2(function (response2){
-                    if (!response2.error) {
-                        qencode.status({
-                            token: response2.task_token,
-                            url: response2.status_url
-                        }, function (response) {
-                            var status_or = response.statuses[response2.task_token].status;
-                            var status = status_or.charAt(0).toUpperCase() + status_or.slice(1);
-                            var percent = response.statuses[response2.task_token].percent;
-                            if(percent == 0){
-                                $('.progress-bar').hide();
-                                $('.progress-bar-0').show();
-                                $('.progress-bar-0').css("width", "100%").text(status + ": 0%");
-                            }else {
-                                $('.progress-bar-0').hide();
-                                $('.progress-bar').show();
-                                $('.progress-bar').css("width", percent + "%").text(status + ": " + percent.toFixed(2) + " %");
-                                if (status_or == "completed" && response.statuses[response2.task_token].videos.length > 0) {
-                                    var manifestUri = response.statuses[response2.task_token].videos[0].url;
-                                    $('#video').css("display", "block");
-                                    if (output_format == 'mp4'){
-                                        var video = $('#video')[0];
-                                        video.src = manifestUri;
-                                        video.load();
-                                        video.play();
-                                    }else{
-                                        initApp(manifestUri);
-                                    }
-                                }
-                            }
 
-
-
-                        });
-                    }
-                },
-                function(response1) {
-                    var percentage = response1.percentage;
-                    if (percentage <= 0) {
-                        $('.progress-bar').css("width", percentage + "%").text("Starting");
-                    } else {
-                        $('.progress-bar').css("width", percentage + "%").text("Uploading: " + percentage + " %");
-                    }
-                });
+                if (qencode) {
+                    clear_previous_job(qencode);
+                }
+                qencode = new Qencode(token, {"query": data}, options);
+                qencode.start_custom(function (start_response){
+                        if (!start_response.error) {
+                            qencode.status(
+                                {
+                                    token: start_response.task_token,
+                                    url: start_response.status_url
+                                },
+                                poll_job_status
+                            );
+                        }
+                    },
+                    update_upload_progress
+                );
             }
         }
     );
-
-    function initApp(url) {
-        shaka.polyfill.installAll();
-        if (shaka.Player.isBrowserSupported()) {
-            initPlayer(url);
-        } else {
-            console.error('Browser not supported!');
-        }
-    }
-
-    function initPlayer(url) {
-        var video = document.getElementById('video');
-        var player = new shaka.Player(video);
-        window.player = player;
-        player.addEventListener('error', onErrorEvent);
-        player.load(url).then(function() {
-            console.log('The video has now been loaded!');
-        }).catch(onError);
-    }
-
-    function onErrorEvent(event) {
-        onError(event.detail);
-    }
-
-    function onError(error) {
-        console.error('Error code', error.code, 'object', error);
-    }
-
-
 </script>
 </html>

@@ -1,0 +1,24 @@
+.form {
+    width: 100%;
+}
+.form-element {
+    margin-bottom: 10px;
+    width: 50%;
+}
+.form-element-2 {
+    width: 23%;
+}
+.invisible {
+    display: none;
+}
+.col-2 {
+    float: left;
+    width: 50%;
+}
+#video{
+    width: 100%;
+    display: none;
+}
+.progress-striped{
+    width: 100%;
+}
