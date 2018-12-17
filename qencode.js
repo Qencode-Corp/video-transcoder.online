@@ -342,12 +342,15 @@ var Qencode = (function () {
         callback(data.token, statuses);
         if(statuses.error) return;
 
+        var status_url = data.url;
         var timer = setInterval(function () {
-            var statuses = _get_status(data.url, [data.token]);
+            var statuses = _get_status(status_url, [data.token]);
             callback(data.token, statuses);
             if(statuses.error) clearInterval(timer);
             var status = statuses.statuses[data.token];
-            if (status['status'] == "completed") clearInterval(timer);
+            if (status['status_url'])
+                status_url =  status['status_url'];
+            if (status['status'] == "completed" || status['error'] == 1) clearInterval(timer);
         }, interval*1000);
         this.timer = timer;
 
