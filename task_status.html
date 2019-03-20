@@ -109,7 +109,7 @@
             var task_token = $('#task_token').val();
             if (task_token != '') {
                 var response = get_status(status_url, [task_token]);
-                $('#status').text(response);
+                $('#status').text(JSON.stringify(response));
             }
         }
     );
