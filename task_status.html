@@ -4,28 +4,23 @@
     <meta charset="UTF-8">
     <title>Qencode - Get task status</title>
     <script src="https://code.jquery.com/jquery-3.2.1.min.js"></script>
-    <link rel="stylesheet" href="styles.css"/>
 </head>
 <body>
-<div class="form">
-    <div class="col-2">
-        <h2><a href="https://cloud.qencode.com">Qencode</a> Get task status example:</h2>
-        <div>Status url</div>
-        <div>
-            <input type="text" id="status_url" class="form-element" value="https://api-qa.qencode.com/v1/status"/>
-        </div>
-        <div>Task token</div>
-        <div>
-            <input type="text" id="task_token" class="form-element" />
-        </div>
-        <div>
-            <button id="btn_ok" class="form-element">OK</button>
-        </div>
+    <h2><a href="https://cloud.qencode.com">Qencode</a> Get task status example:</h2>
+    <div>Status url</div>
+    <div>
+        <input type="text" id="status_url" class="form-element" value="https://api-qa.qencode.com/v1/status"/>
+    </div>
+    <div>Task token</div>
+    <div>
+        <input type="text" id="task_token" class="form-element" />
+    </div>
+    <div>
+        <button id="btn_ok" class="form-element">OK</button>
     </div>
 
-</div>
-<hr>
-<div id="status"></div>
+    <hr>
+    <pre id="status"></pre>
 </body>
 
 <script>
@@ -110,7 +105,7 @@
             if (task_token != '') {
                 var response = get_status(status_url, [task_token]);
                 var status = response['statuses'][task_token];
-                $('#status').text(JSON.stringify(status));
+                $('#status').text(JSON.stringify(status, null, 4));
                 status_url = status['status_url'];
                 if (status_url) {
                     $('#status_url').val(status_url);
