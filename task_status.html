@@ -111,8 +111,9 @@
             var task_token = $('#task_token').val();
             if (task_token != '') {
                 var response = get_status(status_url, [task_token]);
-                $('#status').text(JSON.stringify(response));
-                status_url = response['status_url'];
+                var status = response['statuses'][task_token];
+                $('#status').text(JSON.stringify(status));
+                status_url = status['status_url'];
                 $('#status_url').val(status_url);
             }
         }
