@@ -10,6 +10,10 @@
 <div class="form">
     <div class="col-2">
         <h2><a href="https://cloud.qencode.com">Qencode</a> Get task status example:</h2>
+        <div>Status url</div>
+        <div>
+            <input type="text" id="status_url" class="form-element" value="https://api-qa.qencode.com/v1/status"/>
+        </div>
         <div>Task token</div>
         <div>
             <input type="text" id="task_token" class="form-element" />
@@ -19,17 +23,15 @@
         </div>
     </div>
 
-    <div class="col-2">
-        <div id="status">
+    <div id="status">
 
-        </div>
     </div>
+
 </div>
 </body>
 
 <script>
-    var qencode;
-    var status_url = 'https://api-qa.qencode.com/v1/status'; //initial url to get status
+    var status_url = $('#status_url').val(); //initial url to get status
 
     var call_server = function (url, data, error_text, is_get, send_files) {
         var request_type = is_get === true ? 'GET' : 'POST';
@@ -110,6 +112,8 @@
             if (task_token != '') {
                 var response = get_status(status_url, [task_token]);
                 $('#status').text(JSON.stringify(response));
+                status_url = response['status_url'];
+                $('#status_url').val(status_url);
             }
         }
     );
