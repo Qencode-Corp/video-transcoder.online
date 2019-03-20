@@ -22,7 +22,7 @@
             <button id="btn_ok" class="form-element">OK</button>
         </div>
     </div>
-
+    <hr>
     <div id="status">
 
     </div>
@@ -114,7 +114,9 @@
                 var status = response['statuses'][task_token];
                 $('#status').text(JSON.stringify(status));
                 status_url = status['status_url'];
-                $('#status_url').val(status_url);
+                if (status_url) {
+                    $('#status_url').val(status_url);
+                }
             }
         }
     );
