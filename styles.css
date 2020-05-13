@@ -1,24 +1,39 @@
 .form {
     width: 100%;
 }
+
 .form-element {
     margin-bottom: 10px;
     width: 50%;
 }
+
 .form-element-2 {
     width: 23%;
 }
+
 .invisible {
     display: none;
 }
+
 .col-2 {
     float: left;
     width: 50%;
 }
-#video{
+
+#video {
     width: 100%;
     display: none;
 }
-.progress-striped{
+
+.progress-striped {
+    margin: 10px;
     width: 100%;
+}
+
+.wrapper {
+    width: 100%;
+    float: left;
+    align-items: left;
+    display: flex;
+    flex-direction: column;
 }

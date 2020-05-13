@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>video-transcoder.online</title>
+    <script src="https://code.jquery.com/jquery-3.2.1.min.js"></script>
+    <script src="tus.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/2.2.8/shaka-player.compiled.js"></script>
+    <script src="qencode_multiple_uploads.js"></script>
+    <link rel="stylesheet" href="progress-bar.css" />
+    <link rel="stylesheet" href="styles.css" />
+</head>
+
+<body>
+    <div class="form">
+        <div class="col-2">
+            <h2><a href="https://cloud.qencode.com">Qencode</a> Custom Job API Example:</h2>
+            <div>Choose file</div>
+            <div>
+                <input type="file" name="file" multiple>
+            </div>
+            <div>Or insert URL</div>
+            <div>
+                <input type="text" id="video_url" class="form-element" value="https://qa.qencode.com/static/1.mp4" />
+            </div>
+            <div>Output Format</div>
+            <div>
+                <select id="output_format" class="form-element" onchange="load_codecs()">
+                <option value="mp4">MP4</option>
+                <option value="advanced_hls">HLS</option>
+                <option value="advanced_dash">MPEG - DASH</option>
+                <option value="webm">WEBM</option>
+            </select>
+            </div>
+            <div>Video Codec</div>
+            <div>
+                <select id="video_codec" class="form-element">
+                <option value="libx264">H.264 (MPEG-4 Part 10)</option>
+                <option value="libx265">H.265 (MPEG-H PART2/HEVC)</option>
+            </select>
+            </div>
+            <div>Destination</div>
+            <div>
+                <input type="text" id="destination" class="form-element" />
+            </div>
+            <div>Size, px</div>
+            <div>
+                <input type="text" id="size_w" class="form-element-2" value="320" /> x
+                <input type="text" id="size_h" class="form-element-2" value="240" />
+            </div>
+            <div>Rotate, degrees</div>
+            <div>
+                <input type="text" id="rotate" class="form-element" value="0" />
+            </div>
+            <div>Framerate</div>
+            <div>
+                <input type="text" id="framerate" class="form-element" value="25" />
+            </div>
+            <div>Bitrate, kbps</div>
+            <div>
+                <input type="text" id="bitrate" class="form-element" value="300" />
+            </div>
+            <div>Pix Format</div>
+            <div>
+                <input type="text" id="pix_format" class="form-element" value="yuv420p" />
+            </div>
+            <div>Audio Codec</div>
+            <div>
+                <select id="audio_codec" class="form-element">
+                <option value="aac">AAC</option>
+            </select>
+            </div>
+            <div>Audio Bitrate</div>
+            <div>
+                <input type="text" id="audio_bitrate" class="form-element" value="64" />
+            </div>
+            <div>Audio Sample Rate</div>
+            <div>
+                <input type="text" id="audio_sample_rate" class="form-element" value="44100" />
+            </div>
+            <div id="segment_duration_block" class="invisible">
+                <div>Segment Duration, seconds</div>
+                <div>
+                    <input type="text" id="segment_duration" class="form-element" value="8" />
+                </div>
+            </div>
+            <div id="keyframe_block" class="invisible">
+                <div>Keyframe interval</div>
+                <div>
+                    <input type="text" id="keyframe" class="form-element" value="60" />
+                </div>
+            </div>
+
+            <div>
+                <button id="btn_ok" class="form-element">OK</button>
+            </div>
+
+            <div>
+                <a href="/start_encode.html">See Preset Job API Example</a>
+            </div>
+        </div>
+
+        <div class="col-2">
+            <div class="wrapper" id="file_list">
+
+            </div>
+            <!-- <div class="progress-striped active">
+            <div class="progress-bar-0" id="bar-0" style="height: 20px;"></div>
+            <div class="progress-bar" id="bar" style="height: 20px;"></div>
+        </div> -->
+            <div class="player-container">
+                <video id="video" controls autoplay></video>
+            </div>
+        </div>
+    </div>
+</body>
+
+<script src="common_multiple_uploads.js"></script>
+<script>
+    var webm_codecs = {
+        "VP8": "libvpx",
+        "VP9": "libvpx-vp9"
+    };
+
+    var codecs = {
+        "H.264 (MPEG-4 Part 10)": "libx264",
+        "H.265 (MPEG-H PART2/HEVC)": "libx265"
+    };
+
+    var webm_audio = {
+        "Vorbis": "vorbis"
+    };
+
+    var audio = {
+        "AAC": "aac"
+    };
+    load_codecs = function() {
+        var $el2 = $("#audio_codec");
+        $el2.empty();
+        var $el = $("#video_codec");
+        $el.empty();
+        var output_format = $("#output_format option:selected").val();
+        if (output_format == 'webm') {
+            $.each(webm_codecs, function(key, value) {
+                $el.append($("<option></option>")
+                    .attr("value", value).text(key));
+            });
+            $.each(webm_audio, function(key, value) {
+                $el2.append($("<option></option>")
+                    .attr("value", value).text(key));
+            });
+        } else {
+            $.each(codecs, function(key, value) {
+                $el.append($("<option></option>")
+                    .attr("value", value).text(key));
+            });
+            $.each(audio, function(key, value) {
+                $el2.append($("<option></option>")
+                    .attr("value", value).text(key));
+            });
+            if (output_format != "advanced_hls") {
+                $("#segment_duration_block").addClass("invisible");
+                $("#keyframe_block").addClass("invisible");
+            } else {
+                $("#segment_duration_block").removeClass("invisible");
+                $("#keyframe_block").removeClass("invisible");
+            }
+        }
+    };
+
+    var qencode = [];
+    $("#btn_ok").click(
+        function() {
+            if (token != '') {
+                var output_format = $("#output_format option:selected").val();
+                var format = {
+                    "output": $("#output_format option:selected").val(),
+                    "destination": $("#destination").val()
+                };
+
+                if (output_format == "advanced_hls" || output_format == "advanced_dash") {
+                    var stream = {
+                        "size": $("#size_w").val() + "x" + $("#size_h").val(),
+                        "rotate": $("#rotate").val(),
+                        "framerate": $("#framerate").val(),
+                        "bitrate": $("#bitrate").val(),
+                        "pix_format": $("#pix_format").val(),
+                        "video_codec": $("#video_codec option:selected").val(),
+                        "audio_codec": $("#audio_codec option:selected").val(),
+                        "audio_bitrate": $("#audio_bitrate").val(),
+                        "audio_sample_rate": $("#audio_sample_rate").val()
+                    };
+                    if (output_format == "advanced_hls") {
+                        stream['keyframe'] = $("#keyframe").val();
+                        format["segment_duration"] = $("#segment_duration").val();
+                    }
+                    format["stream"] = [stream];
+                } else {
+                    format["size"] = $("#size_w").val() + "x" + $("#size_h").val();
+                    format["rotate"] = $("#rotate").val();
+                    format["framerate"] = $("#framerate").val();
+                    format["bitrate"] = $("#bitrate").val();
+                    format["pix_format"] = $("#pix_format").val();
+                    format["video_codec"] = $("#video_codec option:selected").val();
+                    format["audio_codec"] = $("#audio_codec option:selected").val();
+                    format["audio_bitrate"] = $("#audio_bitrate").val();
+                    format["audio_sample_rate"] = $("#audio_sample_rate").val();
+                }
+                var data = [];
+                var file_input = $("input[name=file]").get(0);
+                if (file_input.files.length == 0) {
+                    data.push({
+                        "source": $("#video_url").val(),
+                        "format": [format]
+                    });
+                } else {
+
+                    for (var i = 0; i < file_input.files.length; ++i) {
+                        data.push({
+                            "file": file_input.files[i],
+                            "format": [format]
+                        });
+                    }
+
+                }
+
+                var options = {
+                    interval: 15, //status polling interval
+                    endpoint: 'https://api.qencode.com' //api endpoint
+                };
+
+                if (qencode) {
+                    clear_previous_job(qencode);
+                }
+                for (var i = 0; i < data.length; i++) {
+                    // var nn = 'Name'+i;
+                    // var oo = new TestObject(nn);
+                    // oo.start_custom();
+                    run_qencode(data[i], options)
+                }
+            }
+        }
+    );
+
+    async function run_qencode(data, options) {
+        var ss = new Qencode(token, {
+            "query": data
+        }, options);
+        qencode.push(ss);
+        var is_good = ss.create_task();
+        if (is_good) {
+            add_progress_bar(ss.task_token);
+            ss.start_custom(function(start_response) {
+                if (!start_response.error) {
+                    ss.status({
+                            token: start_response.task_token,
+                            url: start_response.status_url,
+                            filename: data.file.name
+                        },
+                        poll_job_status
+                    );
+                } else {
+                    console.log("Error!!!")
+                    console.log(start_response)
+                }
+            }, update_upload_progress);
+        }
+
+    }
+</script>
+
+</html>
