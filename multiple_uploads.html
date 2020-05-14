@@ -7,7 +7,7 @@
     <script src="https://code.jquery.com/jquery-3.2.1.min.js"></script>
     <script src="tus.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/2.2.8/shaka-player.compiled.js"></script>
-    <script src="qencode_multiple_uploads.js"></script>
+    <script src="qencode.js"></script>
     <link rel="stylesheet" href="progress-bar.css" />
     <link rel="stylesheet" href="styles.css" />
 </head>
@@ -116,7 +116,7 @@
     </div>
 </body>
 
-<script src="common_multiple_uploads.js"></script>
+<script src="common.js"></script>
 <script>
     var webm_codecs = {
         "VP8": "libvpx",
@@ -169,7 +169,7 @@
         }
     };
 
-    var qencode = [];
+    var qencode_arr = [];
     $("#btn_ok").click(
         function() {
             if (token != '') {
@@ -230,8 +230,8 @@
                     endpoint: 'https://api.qencode.com' //api endpoint
                 };
 
-                if (qencode) {
-                    clear_previous_job(qencode);
+                if (qencode_arr) {
+                    clear_previous_job_miltiple_uploads(qencode_arr);
                 }
                 for (var i = 0; i < data.length; i++) {
                     // var nn = 'Name'+i;
@@ -247,8 +247,21 @@
         var ss = new Qencode(token, {
             "query": data
         }, options);
-        qencode.push(ss);
-        var is_good = ss.create_task();
+        qencode_arr.push(ss);
+        var is_good = ss.create_task(function(start_response) {
+            if (!start_response.error) {
+                ss.status({
+                        token: start_response.task_token,
+                        url: start_response.status_url,
+                        filename: data.file.name
+                    },
+                    poll_job_status_multiple_uploads
+                );
+            } else {
+                console.log("Error!!!")
+                console.log(start_response)
+            }
+        });
         if (is_good) {
             add_progress_bar(ss.task_token);
             ss.start_custom(function(start_response) {
@@ -258,13 +271,13 @@
                             url: start_response.status_url,
                             filename: data.file.name
                         },
-                        poll_job_status
+                        poll_job_status_multiple_uploads
                     );
                 } else {
                     console.log("Error!!!")
                     console.log(start_response)
                 }
-            }, update_upload_progress);
+            }, update_multiple_upload_progress);
         }
 
     }
