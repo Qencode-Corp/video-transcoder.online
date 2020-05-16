@@ -344,9 +344,9 @@ function click_ok_btn_multiple(num_form = '') {
     var input_file_id = "input[id=file]".replace("file", "file" + num_form);
     var id_output_format = "#output_format" + num_form + " option:selected";
     var video_codec_id = "#video_codec" + num_form + " option:selected";
-    var destination_id = get_name_id_element('destination', num_form);
-    var size_w_id = get_name_id_element('size_w', num_form);
-    var size_h_id = get_name_id_element('size_h', num_form);
+    var destination_id = "#" + get_name_id_element('destination', num_form);
+    var size_w_id = "#" + get_name_id_element('size_w', num_form);
+    var size_h_id = "#" + get_name_id_element('size_h', num_form);
 
     if (token != '') {
         var output_format = $(id_output_format).val();
@@ -396,12 +396,11 @@ function click_ok_btn_multiple(num_form = '') {
 }
 
 
-var qencode_arr_multiple = [];
 async function run_qencode_multiple(data, options) {
     var ss = new Qencode(token, {
         "query": data
     }, options);
-    qencode_arr_multiple.push(ss);
+    qencode_arr.push(ss);
     var is_good = ss.create_task(function(start_response) {
         if (!start_response.error) {
             ss.status({
