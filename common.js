@@ -181,3 +181,257 @@ function onErrorEvent(event) {
 function onError(error) {
     console.error('Error code', error.code, 'object', error);
 }
+
+function get_name_id_element(value1 = '', value2 = '', value3 = '') {
+    return value1 + value2 + value3;
+
+}
+
+
+function new_form(num_form) {
+    var array_output_format = [{ value: 'mp4', name: "MP4" }, { value: 'advanced_hls', name: "HLS" },
+        { value: 'advanced_dash', name: "MPEG - DASH" }, { value: 'webm', name: "MPWEBM" }
+    ]
+
+    var input_file_id = get_name_id_element('file', num_form);
+    var output_format_id = get_name_id_element('output_format', num_form);
+    var video_codec_id = get_name_id_element('video_codec', num_form);
+    var destination_id = get_name_id_element('destination', num_form);
+    var size_w_id = get_name_id_element('size_w', num_form);
+    var size_h_id = get_name_id_element('size_h', num_form);
+
+    var parent_div = document.createElement("div");
+
+    var choos_file_text_div = document.createElement("div");
+    choos_file_text_div.innerText = 'Choose file';
+    var input_file_text_div = document.createElement("div");
+    var input_file_text = document.createElement("input");
+    input_file_text.type = 'file';
+    input_file_text.id = input_file_id;
+    input_file_text.setAttribute("multiple", "");
+    input_file_text.className = 'form-element';
+    input_file_text_div.appendChild(input_file_text);
+
+    var output_format_div = document.createElement("div");
+    output_format_div.innerText = 'Output Format';
+    var input_output_format_div = document.createElement("div");
+    var select_output = document.createElement("select");
+    select_output.className = 'form-element';
+
+    select_output.id = output_format_id;
+    input_output_format_div.appendChild(select_output);
+
+    for (var i = 0; i < array_output_format.length; i++) {
+        var option = document.createElement("option");
+        option.value = array_output_format[i].value;
+        option.text = array_output_format[i].name;
+        select_output.appendChild(option);
+    }
+
+    var video_codec_div = document.createElement("div");
+    video_codec_div.innerText = 'Video Codec';
+    var input_video_codec_div = document.createElement("div");
+    var select_video_codec = document.createElement("select");
+    select_video_codec.className = 'form-element';
+    select_video_codec.id = video_codec_id;
+    input_video_codec_div.appendChild(select_video_codec);
+
+
+
+    var Destination_div = document.createElement("div");
+    Destination_div.innerText = 'Destination';
+    var input_Destination_div = document.createElement("div");
+    var input_file_text = document.createElement("input");
+    input_file_text.type = 'text';
+    input_file_text.id = destination_id;
+    input_file_text.className = 'form-element';
+    input_Destination_div.appendChild(input_file_text);
+
+
+    var size_div = document.createElement("div");
+    size_div.innerText = 'Size, px';
+    var input_size_div = document.createElement("div");
+    var input_size_w = document.createElement("input");
+    input_size_w.type = 'text';
+    input_size_w.id = size_w_id;
+    input_size_w.className = 'form-element-2';
+    input_size_w.value = "320"
+    input_size_div.appendChild(input_size_w);
+
+    input_size_div.append(" x ");
+
+    var input_size_h = document.createElement("input");
+    input_size_h.type = 'text';
+    input_size_h.id = size_h_id;
+    input_size_h.value = "240"
+    input_size_h.className = 'form-element-2';
+    input_size_div.appendChild(input_size_h);
+
+
+
+
+    var btn_ok_div = document.createElement("div");
+    var btn_ok = document.createElement("button");
+    btn_ok.className = 'form-element';
+    btn_ok.innerText = "Ok";
+    btn_ok.onclick = function() { click_ok_btn_multiple(num_form); };
+    btn_ok_div.appendChild(btn_ok);
+
+    var btn_add_div = document.createElement("div");
+    var btn_add = document.createElement("button");
+    btn_add.className = 'form-element';
+    btn_add.innerText = "Add Form " + (num_form + 1);
+    btn_add.onclick = function() { Creae_form(); };
+    btn_add_div.appendChild(btn_add);
+
+
+    parent_div.appendChild(choos_file_text_div);
+    parent_div.appendChild(input_file_text_div);
+
+
+    parent_div.appendChild(output_format_div);
+    parent_div.appendChild(input_output_format_div);
+
+    parent_div.appendChild(video_codec_div);
+    parent_div.appendChild(input_video_codec_div);
+
+    parent_div.appendChild(Destination_div);
+    parent_div.appendChild(input_Destination_div);
+
+
+    parent_div.appendChild(size_div);
+    parent_div.appendChild(input_size_div);
+
+    parent_div.appendChild(btn_ok_div);
+    parent_div.appendChild(btn_add_div);
+
+    document.getElementById('list_forms').appendChild(parent_div);
+    select_output.onchange = function() { load_codecs_multiple(num_form); };
+    load_codecs_multiple(num_form);
+}
+
+var webm_codecs_multiple = {
+    "VP8": "libvpx",
+    "VP9": "libvpx-vp9"
+};
+
+var codecs_multiple = {
+    "H.264 (MPEG-4 Part 10)": "libx264",
+    "H.265 (MPEG-H PART2/HEVC)": "libx265"
+};
+
+function load_codecs_multiple(num_id = '') {
+    var id_video_codec = "#video_codec" + num_id;
+    var id_output_format = "#output_format" + num_id + " option:selected";
+    var $el = $(id_video_codec);
+    $el.empty();
+    var output_format = $(id_output_format).val();
+    if (output_format == 'webm') {
+        $.each(webm_codecs_multiple, function(key, value) {
+            $el.append($("<option></option>")
+                .attr("value", value).text(key));
+        });
+    } else {
+        $.each(codecs_multiple, function(key, value) {
+            $el.append($("<option></option>")
+                .attr("value", value).text(key));
+        });
+    }
+};
+
+function click_ok_btn_multiple(num_form = '') {
+
+    var input_file_id = "input[id=file]".replace("file", "file" + num_form);
+    var id_output_format = "#output_format" + num_form + " option:selected";
+    var video_codec_id = "#video_codec" + num_form + " option:selected";
+    var destination_id = get_name_id_element('destination', num_form);
+    var size_w_id = get_name_id_element('size_w', num_form);
+    var size_h_id = get_name_id_element('size_h', num_form);
+
+    if (token != '') {
+        var output_format = $(id_output_format).val();
+        var format = {
+            "output": $(id_output_format).val(),
+            "destination": $(destination_id).val()
+        };
+
+        if (output_format == "advanced_hls" || output_format == "advanced_dash") {
+            var stream = {
+                "size": $(size_w_id).val() + "x" + $(size_h_id).val(),
+                "video_codec": $(video_codec_id).val(),
+            };
+            format["stream"] = [stream];
+        } else {
+            format["size"] = $(size_w_id).val() + "x" + $(size_h_id).val();
+            format["video_codec"] = $(video_codec_id).val();
+        }
+        var data = [];
+        var file_input = $(input_file_id).get(0);
+        if (file_input.files.length == 0) {
+            alert("Select files");
+            return;
+        } else {
+
+            for (var i = 0; i < file_input.files.length; ++i) {
+                data.push({
+                    "file": file_input.files[i],
+                    "format": [format]
+                });
+            }
+
+        }
+
+        var options = {
+            interval: 15, //status polling interval
+            endpoint: 'https://api.qencode.com' //api endpoint
+        };
+
+        for (var i = 0; i < data.length; i++) {
+            // var nn = 'Name'+i;
+            // var oo = new TestObject(nn);
+            // oo.start_custom();
+            run_qencode(data[i], options)
+        }
+    }
+}
+
+
+var qencode_arr_multiple = [];
+async function run_qencode_multiple(data, options) {
+    var ss = new Qencode(token, {
+        "query": data
+    }, options);
+    qencode_arr_multiple.push(ss);
+    var is_good = ss.create_task(function(start_response) {
+        if (!start_response.error) {
+            ss.status({
+                    token: start_response.task_token,
+                    url: start_response.status_url,
+                    filename: data.file.name
+                },
+                poll_job_status_multiple_uploads
+            );
+        } else {
+            console.log("Error!!!")
+            console.log(start_response)
+        }
+    });
+    if (is_good) {
+        add_progress_bar(ss.task_token);
+        ss.start_custom(function(start_response) {
+            if (!start_response.error) {
+                ss.status({
+                        token: start_response.task_token,
+                        url: start_response.status_url,
+                        filename: data.file.name
+                    },
+                    poll_job_status_multiple_uploads
+                );
+            } else {
+                console.log("Error!!!")
+                console.log(start_response)
+            }
+        }, update_multiple_upload_progress);
+    }
+
+}
