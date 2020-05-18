@@ -18,13 +18,10 @@ var Qencode = (function() {
         }
         try {
             const response = await fetch(url, {
-                method: request_type, // *GET, POST, PUT, DELETE, etc.
-                mode: 'cors', // no-cors, *cors, same-origin
-                cache: 'no-cache', // *default, no-cache, reload, force-cache, only-if-cached
-                // headers: {
-                //     'Content-Type': 'json'
-                // },
-                body: data // body data type must match "Content-Type" header
+                method: request_type,
+                mode: 'cors',
+                cache: 'no-cache',
+                body: data
             });
             if (response.status === 0) {
                 console.log('Not connect.\n Verify Network.');
@@ -51,44 +48,6 @@ var Qencode = (function() {
             console.log("Connection error", err);
         }
         return result;
-
-
-        // parses JSON response into native JavaScript obj
-
-
-        // var request = {
-        //     url: url,
-        //     type: request_type,
-        //     data: data,
-        //     dataType: 'json',
-        //     crossDomain: true,
-        //     async: true,
-
-        //     error: function(jqXHR, exception) {
-        //         if (jqXHR.status === 0) {
-        //             console.log('Not connect.\n Verify Network.');
-        //         } else if (jqXHR.status == 404) {
-        //             console.log('Requested page not found. [404]');
-        //         } else if (jqXHR.status == 500) {
-        //             console.log('Internal Server Error [500].');
-        //         } else if (exception === 'parsererror') {
-        //             console.log('Requested JSON parse failed.');
-        //         } else if (exception === 'timeout') {
-        //             console.log('Time out error.');
-        //         } else if (exception === 'abort') {
-        //             console.log('Ajax request aborted.');
-        //         } else {
-        //             console.log('Uncaught Error.\n' + jqXHR.responseText);
-        //         }
-        //     }
-
-        // };
-
-        // if (request_type == 'POST' && send_files) {
-        //     request.processData = false;
-        //     request.contentType = false;
-        //     request.cache = false;
-        // }
 
 
     };
