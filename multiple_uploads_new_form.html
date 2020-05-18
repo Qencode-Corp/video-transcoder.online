@@ -203,7 +203,7 @@
             "query": data
         }, options);
         qencode_arr.push(ss);
-        var is_good = ss.create_task(function(start_response) {
+        var is_good = await ss.create_task(function(start_response) {
             if (!start_response.error) {
                 ss.status({
                         token: start_response.task_token,

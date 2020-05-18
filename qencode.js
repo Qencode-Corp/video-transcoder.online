@@ -6,118 +6,119 @@
  * Licensed under MIT (https://www.qencode.com/lib/LICENSE)
  * ======================================================================== */
 
-
-var new_jQuery;
-var jQ = false;
-
-function initJQ() {
-    if (typeof(jQuery) == 'undefined') {
-        if (!jQ) {
-            jQ = true;
-            document.write('<script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>');
-        }
-        setTimeout('initJQ()', 50);
-    } else {
-        if ($.fn.jquery < '1.7.0') {
-            document.write('<script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>');
-            new_jQuery = jQuery.noConflict();
-            $ = new_jQuery;
-        }
-        var script = document.createElement('script');
-        script.src = "https://code.jquery.com/ui/1.12.1/jquery-ui.js";
-        document.head.appendChild(script);
-    }
-}
-
-initJQ();
-
-
-function initTUS() {
-    //
-}
-initTUS();
-
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
+function WriteError(jqXHR, exception) {
+    if (jqXHR.status === 0) {
+        console.log('Not connect.\n Verify Network.');
+    } else if (jqXHR.status == 404) {
+        console.log('Requested page not found. [404]');
+    } else if (jqXHR.status == 500) {
+        console.log('Internal Server Error [500].');
+    } else if (exception === 'parsererror') {
+        console.log('Requested JSON parse failed.');
+    } else if (exception === 'timeout') {
+        console.log('Time out error.');
+    } else if (exception === 'abort') {
+        console.log('Ajax request aborted.');
+    } else {
+        console.log('Uncaught Error.\n' + jqXHR.responseText);
+    }
+};
 
 var Qencode = (function() {
-    var call_server = function(url, data, error_text, is_get, send_files) {
+    var call_server = async function(url, data, error_text, is_get, send_files) {
         var request_type = is_get === true ? 'GET' : 'POST';
         data = data === undefined ? {} : data;
         if (error_text === undefined) {
             error_text = 'error execute ' + url;
         }
-        var request = {
-            url: url,
-            type: request_type,
-            data: data,
-            dataType: 'json',
-            crossDomain: true,
-            async: false,
-
-            error: function(jqXHR, exception) {
-                if (jqXHR.status === 0) {
-                    console.log('Not connect.\n Verify Network.');
-                } else if (jqXHR.status == 404) {
-                    console.log('Requested page not found. [404]');
-                } else if (jqXHR.status == 500) {
-                    console.log('Internal Server Error [500].');
-                } else if (exception === 'parsererror') {
-                    console.log('Requested JSON parse failed.');
-                } else if (exception === 'timeout') {
-                    console.log('Time out error.');
-                } else if (exception === 'abort') {
-                    console.log('Ajax request aborted.');
-                } else {
-                    console.log('Uncaught Error.\n' + jqXHR.responseText);
-                }
-            }
-
-        };
-
-        if (request_type == 'POST' && send_files) {
-            request.processData = false;
-            request.contentType = false;
-            request.cache = false;
-        }
-
-        var res = $.ajax(request);
-        var response = null;
         try {
-            response = $.parseJSON(res.responseText);
-            if (!response) {
-                response = {
+            const response = await fetch(url, {
+                method: request_type, // *GET, POST, PUT, DELETE, etc.
+                mode: 'cors', // no-cors, *cors, same-origin
+                cache: 'no-cache', // *default, no-cache, reload, force-cache, only-if-cached
+                // headers: {
+                //     'Content-Type': 'json'
+                // },
+                body: data // body data type must match "Content-Type" header
+            });
+            var result = await response.json();
+            console.log("Response:" + result);
+            if (!result) {
+                result = {
                     'error': false,
                     'message': error_text
                 };
             }
+
+
         } catch (err) {
-            response = {
+            result = {
                 'error': true,
                 'message': error_text + '\n' +
                     'Error description: ' + err.message + '\n'
             };
-            // response.message += '\n' + res.responseText;
+            WriteError(err);
         }
+        return result;
 
-        return response;
+
+        // parses JSON response into native JavaScript obj
+
+
+        // var request = {
+        //     url: url,
+        //     type: request_type,
+        //     data: data,
+        //     dataType: 'json',
+        //     crossDomain: true,
+        //     async: true,
+
+        //     error: function(jqXHR, exception) {
+        //         if (jqXHR.status === 0) {
+        //             console.log('Not connect.\n Verify Network.');
+        //         } else if (jqXHR.status == 404) {
+        //             console.log('Requested page not found. [404]');
+        //         } else if (jqXHR.status == 500) {
+        //             console.log('Internal Server Error [500].');
+        //         } else if (exception === 'parsererror') {
+        //             console.log('Requested JSON parse failed.');
+        //         } else if (exception === 'timeout') {
+        //             console.log('Time out error.');
+        //         } else if (exception === 'abort') {
+        //             console.log('Ajax request aborted.');
+        //         } else {
+        //             console.log('Uncaught Error.\n' + jqXHR.responseText);
+        //         }
+        //     }
+
+        // };
+
+        // if (request_type == 'POST' && send_files) {
+        //     request.processData = false;
+        //     request.contentType = false;
+        //     request.cache = false;
+        // }
+
+
     };
 
-    var call_server_get = function(url, data, error_text) {
-        return call_server(url, data, error_text, true);
+    var call_server_get = async function(url, data, error_text) {
+        return await call_server(url, data, error_text, true);
     };
 
-    var call_server_post = function(url, data, error_text, send_files) {
-        return call_server(url, data, error_text, false, send_files);
+    var call_server_post = async function(url, data, error_text, send_files) {
+        return await call_server(url, data, error_text, false, send_files);
     };
 
-    function _create_task(url, token) {
+    async function _create_task(url, token) {
         var data = new FormData();
         data.append('token', token);
-        return call_server_post(url, data, null, true);
+        return await call_server_post(url, data, null, true);
     }
 
-    function _start_encode(url, task_token, options) {
+    async function _start_encode(url, task_token, options) {
         var data = new FormData();
         data.append('task_token', task_token);
         data.append('profiles', options.profile_ids.toString());
@@ -139,17 +140,17 @@ var Qencode = (function() {
         if (options.subtitles) {
             data.append('subtitles', subtitles);
         }
-        return call_server_post(url, data, null, true);
+        return await call_server_post(url, data, null, true);
     }
 
-    function _start_encode2(url, task_token, options) {
+    async function _start_encode2(url, task_token, options) {
         var data = new FormData();
         data.append('task_token', task_token);
         data.append('query', JSON.stringify({ "query": options.query }));
         if (options.payload) {
             data.append('payload', options.payload);
         }
-        return call_server_post(url, data, null, true);
+        return await call_server_post(url, data, null, true);
     }
 
     var tus_upload = [];
@@ -164,10 +165,11 @@ var Qencode = (function() {
         }
     }
 
-    function _get_status(url, tokens) {
+    async function _get_status(url, tokens) {
         var data = new FormData();
         data.append('task_tokens', tokens);
-        return call_server_post(url, data, null, true);
+        data
+        return await call_server_post(url, data, null, true);
     }
 
     var defaultOptions = {
@@ -229,8 +231,8 @@ var Qencode = (function() {
         );
     };
 
-    Qencode.prototype.start_custom = function(job_done_callback, upload_progress_callback, chunk_size = 0) {
-        this._launch_job(
+    Qencode.prototype.start_custom = async function(job_done_callback, upload_progress_callback, chunk_size = 0) {
+        await this._launch_job(
             this._start_encode2_with_callback,
             job_done_callback,
             upload_progress_callback,
@@ -238,9 +240,9 @@ var Qencode = (function() {
         );
     };
 
-    Qencode.prototype.create_task = function(job_done_callback) {
+    Qencode.prototype.create_task = async function(job_done_callback) {
         var token = this.options.token;
-        var create_task_response = _create_task(this.options.endpoint + '/v1/create_task', token);
+        var create_task_response = await _create_task(this.options.endpoint + '/v1/create_task', token);
         this.task_token = create_task_response.task_token;
         this.upload_url = create_task_response.upload_url;
         if (create_task_response.error) {
@@ -252,9 +254,9 @@ var Qencode = (function() {
 
 
 
-    Qencode.prototype._launch_job = function(launch_job_func, job_done_callback, upload_progress_callback, chunk_size) {
+    Qencode.prototype._launch_job = async function(launch_job_func, job_done_callback, upload_progress_callback, chunk_size) {
         if (this.task_token == '' || this.task_token == null || this.task_token === undefined) {
-            var isTaskCreate = this.create_task(job_done_callback);
+            var isTaskCreate = await this.create_task(job_done_callback);
             if (isTaskCreate === false)
                 return;
         }
@@ -340,21 +342,26 @@ var Qencode = (function() {
     };
 
     Qencode.prototype._start_encode_with_callback = function(task_token, options, callback) {
-        var start_encode_response = _start_encode(options.endpoint + '/v1/start_encode',
+        _start_encode(options.endpoint + '/v1/start_encode',
             task_token,
             options
-        );
+        ).then((start_encode_response) => {
+            _process_launch_job_callback(task_token, start_encode_response, callback);
 
-        _process_launch_job_callback(task_token, start_encode_response, callback);
+        });
+
+
     };
 
     Qencode.prototype._start_encode2_with_callback = function(task_token, options, callback) {
-        var start_encode_response = _start_encode2(options.endpoint + '/v1/start_encode2',
+        _start_encode2(options.endpoint + '/v1/start_encode2',
             task_token,
             options
-        );
+        ).then((start_encode_response) => {
+            _process_launch_job_callback(task_token, start_encode_response, callback);
+        });
 
-        _process_launch_job_callback(task_token, start_encode_response, callback);
+
     };
 
     function _process_launch_job_callback(task_token, start_encode_response, callback) {
@@ -366,7 +373,7 @@ var Qencode = (function() {
         callback(start_encode_response);
     }
 
-    Qencode.prototype.status = function(data, callback) {
+    Qencode.prototype.status = async function(data, callback) {
 
         if ((data.token == undefined || data.token == '' || data.token == null) ||
             (data.url == undefined || data.url == '' || data.url == null)) {
@@ -376,21 +383,25 @@ var Qencode = (function() {
 
         var interval = this.options.interval >= 15 ? this.options.interval : 15;
 
-        var statuses = _get_status(data.url, [data.token]);
-        callback(data.token, data.filename, statuses);
-        if (statuses.error) return;
+        _get_status(data.url, [data.token]).then((statuses) => {
+            callback(data.token, statuses, data.filename);
+            if (statuses.error) return;
 
-        var status_url = data.url;
-        var timer = setInterval(function() {
-            var statuses = _get_status(status_url, [data.token]);
-            callback(data.token, data.filename, statuses);
-            if (statuses.error) clearInterval(timer);
-            var status = statuses.statuses[data.token];
-            if (status['status_url'])
-                status_url = status['status_url'];
-            if (status['status'] == "completed" || status['error'] == 1) clearInterval(timer);
-        }, interval * 1000);
-        this.timer = timer;
+            var status_url = data.url;
+            var timer = setInterval(function() {
+                _get_status(status_url, [data.token]).then((statuses) => {
+                    callback(data.token, statuses, data.filename);
+                    if (statuses.error) clearInterval(timer);
+                    var status = statuses.statuses[data.token];
+                    if (status['status_url'])
+                        status_url = status['status_url'];
+                    if (status['status'] == "completed" || status['error'] == 1) clearInterval(timer);
+                });
+
+            }, interval * 1000);
+            this.timer = timer;
+        });
+
 
     };
 

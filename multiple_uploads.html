@@ -171,84 +171,89 @@
 
     var qencode_arr = [];
     $("#btn_ok").click(
-        function() {
-            if (token != '') {
-                var output_format = $("#output_format option:selected").val();
-                var format = {
-                    "output": $("#output_format option:selected").val(),
-                    "destination": $("#destination").val()
-                };
+        click_ok_btn()
+    );
 
-                if (output_format == "advanced_hls" || output_format == "advanced_dash") {
-                    var stream = {
-                        "size": $("#size_w").val() + "x" + $("#size_h").val(),
-                        "rotate": $("#rotate").val(),
-                        "framerate": $("#framerate").val(),
-                        "bitrate": $("#bitrate").val(),
-                        "pix_format": $("#pix_format").val(),
-                        "video_codec": $("#video_codec option:selected").val(),
-                        "audio_codec": $("#audio_codec option:selected").val(),
-                        "audio_bitrate": $("#audio_bitrate").val(),
-                        "audio_sample_rate": $("#audio_sample_rate").val()
-                    };
-                    if (output_format == "advanced_hls") {
-                        stream['keyframe'] = $("#keyframe").val();
-                        format["segment_duration"] = $("#segment_duration").val();
-                    }
-                    format["stream"] = [stream];
-                } else {
-                    format["size"] = $("#size_w").val() + "x" + $("#size_h").val();
-                    format["rotate"] = $("#rotate").val();
-                    format["framerate"] = $("#framerate").val();
-                    format["bitrate"] = $("#bitrate").val();
-                    format["pix_format"] = $("#pix_format").val();
-                    format["video_codec"] = $("#video_codec option:selected").val();
-                    format["audio_codec"] = $("#audio_codec option:selected").val();
-                    format["audio_bitrate"] = $("#audio_bitrate").val();
-                    format["audio_sample_rate"] = $("#audio_sample_rate").val();
+    function click_ok_btn() {
+
+        if (token != '') {
+            var output_format = $("#output_format option:selected").val();
+            var format = {
+                "output": $("#output_format option:selected").val(),
+                "destination": $("#destination").val()
+            };
+
+            if (output_format == "advanced_hls" || output_format == "advanced_dash") {
+                var stream = {
+                    "size": $("#size_w").val() + "x" + $("#size_h").val(),
+                    "rotate": $("#rotate").val(),
+                    "framerate": $("#framerate").val(),
+                    "bitrate": $("#bitrate").val(),
+                    "pix_format": $("#pix_format").val(),
+                    "video_codec": $("#video_codec option:selected").val(),
+                    "audio_codec": $("#audio_codec option:selected").val(),
+                    "audio_bitrate": $("#audio_bitrate").val(),
+                    "audio_sample_rate": $("#audio_sample_rate").val()
+                };
+                if (output_format == "advanced_hls") {
+                    stream['keyframe'] = $("#keyframe").val();
+                    format["segment_duration"] = $("#segment_duration").val();
                 }
-                var data = [];
-                var file_input = $("input[name=file]").get(0);
-                if (file_input.files.length == 0) {
+                format["stream"] = [stream];
+            } else {
+                format["size"] = $("#size_w").val() + "x" + $("#size_h").val();
+                format["rotate"] = $("#rotate").val();
+                format["framerate"] = $("#framerate").val();
+                format["bitrate"] = $("#bitrate").val();
+                format["pix_format"] = $("#pix_format").val();
+                format["video_codec"] = $("#video_codec option:selected").val();
+                format["audio_codec"] = $("#audio_codec option:selected").val();
+                format["audio_bitrate"] = $("#audio_bitrate").val();
+                format["audio_sample_rate"] = $("#audio_sample_rate").val();
+            }
+            var data = [];
+            var file_input = $("input[name=file]").get(0);
+            if (file_input.files.length == 0) {
+                data.push({
+                    "source": $("#video_url").val(),
+                    "format": [format]
+                });
+            } else {
+
+                for (var i = 0; i < file_input.files.length; ++i) {
                     data.push({
-                        "source": $("#video_url").val(),
+                        "file": file_input.files[i],
                         "format": [format]
                     });
-                } else {
-
-                    for (var i = 0; i < file_input.files.length; ++i) {
-                        data.push({
-                            "file": file_input.files[i],
-                            "format": [format]
-                        });
-                    }
-
                 }
 
-                var options = {
-                    interval: 15, //status polling interval
-                    endpoint: 'https://api.qencode.com' //api endpoint
-                };
+            }
 
-                if (qencode_arr) {
-                    clear_previous_job_miltiple_uploads(qencode_arr);
-                }
-                for (var i = 0; i < data.length; i++) {
-                    // var nn = 'Name'+i;
-                    // var oo = new TestObject(nn);
-                    // oo.start_custom();
-                    run_qencode(data[i], options)
-                }
+            var options = {
+                interval: 15, //status polling interval
+                endpoint: 'https://api.qencode.com' //api endpoint
+            };
+
+            if (qencode_arr) {
+                clear_previous_job_miltiple_uploads(qencode_arr);
+            }
+            for (var i = 0; i < data.length; i++) {
+                // var nn = 'Name'+i;
+                // var oo = new TestObject(nn);
+                // oo.start_custom();
+                run_qencode(data[i], options)
             }
         }
-    );
+    }
+
+
 
     async function run_qencode(data, options) {
         var ss = new Qencode(token, {
             "query": data
         }, options);
         qencode_arr.push(ss);
-        var is_good = ss.create_task(function(start_response) {
+        var is_good = await ss.create_task(function(start_response) {
             if (!start_response.error) {
                 ss.status({
                         token: start_response.task_token,

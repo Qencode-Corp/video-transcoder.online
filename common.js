@@ -32,7 +32,7 @@ function update_multiple_upload_progress(upload_progress) {
     }
 }
 
-function poll_job_status_multiple_uploads(task_token, filename, response) {
+function poll_job_status_multiple_uploads(task_token, response, filename) {
     var id_progress_bar = '#progress-bar_' + task_token;
     var id_progress_bar_0 = '#progress-bar-0_' + task_token;
     var id_a = '#link_' + task_token;
