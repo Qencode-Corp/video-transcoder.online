@@ -22,7 +22,7 @@ function WriteError(jqXHR, exception) {
     } else if (exception === 'abort') {
         console.log('Ajax request aborted.');
     } else {
-        console.log('Uncaught Error.\n' + jqXHR.responseText);
+        console.log('Uncaught Error.\n' + jqXHR);
     }
 };
 
@@ -373,7 +373,7 @@ var Qencode = (function() {
         callback(start_encode_response);
     }
 
-    Qencode.prototype.status = async function(data, callback) {
+    Qencode.prototype.status = function(data, callback) {
 
         if ((data.token == undefined || data.token == '' || data.token == null) ||
             (data.url == undefined || data.url == '' || data.url == null)) {
