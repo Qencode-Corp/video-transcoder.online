@@ -1,36 +1,19 @@
 /* ========================================================================
- * Qencode: qencode.js v1.0
+ * Qencode: qencode.js v1.2
  * https://www.qencode.com/lib/qencode.js
  * ========================================================================
- * Copyright 2016-2018 Qencode, Inc.
+ * Copyright 2016-2020 Qencode, Inc.
  * Licensed under MIT (https://www.qencode.com/lib/LICENSE)
- * ======================================================================== */
+  ======================================================================== */
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-function WriteError(jqXHR, exception) {
-    if (jqXHR.status === 0) {
-        console.log('Not connect.\n Verify Network.');
-    } else if (jqXHR.status == 404) {
-        console.log('Requested page not found. [404]');
-    } else if (jqXHR.status == 500) {
-        console.log('Internal Server Error [500].');
-    } else if (exception === 'parsererror') {
-        console.log('Requested JSON parse failed.');
-    } else if (exception === 'timeout') {
-        console.log('Time out error.');
-    } else if (exception === 'abort') {
-        console.log('Ajax request aborted.');
-    } else {
-        console.log('Uncaught Error.\n' + jqXHR);
-    }
-};
 
 var Qencode = (function() {
     var call_server = async function(url, data, error_text, is_get, send_files) {
         var request_type = is_get === true ? 'GET' : 'POST';
         data = data === undefined ? {} : data;
-        if (error_text === undefined) {
+        if (error_text === undefined || error_text === null) {
             error_text = 'error execute ' + url;
         }
         try {
@@ -43,6 +26,13 @@ var Qencode = (function() {
                 // },
                 body: data // body data type must match "Content-Type" header
             });
+            if (response.status === 0) {
+                console.log('Not connect.\n Verify Network.');
+            } else if (response.status == 404) {
+                console.log('Requested page not found. [404]');
+            } else if (response.status == 500) {
+                console.log('Internal Server Error [500].');
+            }
             var result = await response.json();
             console.log("Response:" + result);
             if (!result) {
@@ -56,10 +46,9 @@ var Qencode = (function() {
         } catch (err) {
             result = {
                 'error': true,
-                'message': error_text + '\n' +
-                    'Error description: ' + err.message + '\n'
+                'message': 'Error description: ' + err.message + '\n'
             };
-            WriteError(err);
+            console.log("Connection error", err);
         }
         return result;
 
@@ -174,7 +163,7 @@ var Qencode = (function() {
 
     var defaultOptions = {
         interval: 15,
-        endpoint: 'https://api.qencode.com'
+        endpoint: 'https://api.qencode.com1'
     };
 
     // --- lib ---
