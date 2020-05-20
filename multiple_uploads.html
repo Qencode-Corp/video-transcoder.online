@@ -249,16 +249,25 @@
 
 
     async function run_qencode(data, options) {
+        var name = '';
+        if (data.file) {
+            name = data.file.name;
+        } else {
+            var url = data.source.split("/");
+            var file_uuid = url[url.length - 1];
+            name = file_uuid;
+        }
         var ss = new Qencode(token, {
             "query": data
         }, options);
         qencode_arr.push(ss);
         var is_good = await ss.create_task(function(start_response) {
             if (!start_response.error) {
+
                 ss.status({
                         token: start_response.task_token,
                         url: start_response.status_url,
-                        filename: data.file.name
+                        filename: name
                     },
                     poll_job_status_multiple_uploads
                 );
@@ -274,7 +283,7 @@
                     ss.status({
                             token: start_response.task_token,
                             url: start_response.status_url,
-                            filename: data.file.name
+                            filename: name
                         },
                         poll_job_status_multiple_uploads
                     );

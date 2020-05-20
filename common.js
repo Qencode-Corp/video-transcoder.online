@@ -212,6 +212,18 @@ function new_form(num_form) {
     input_file_text.className = 'form-element';
     input_file_text_div.appendChild(input_file_text);
 
+    var inserct_url_div = document.createElement("div");
+    inserct_url_div.innerText = 'Or insert URL';
+    var inserct_url_input_div = document.createElement("div");
+    var inserct_url_imput = document.createElement("input");
+    var inserct_url_imput_id = get_name_id_element('video_url', num_form);
+    inserct_url_imput.type = 'text';
+    inserct_url_imput.value = 'https://qa.qencode.com/static/1.mp4';
+    inserct_url_imput.id = inserct_url_imput_id;
+    inserct_url_imput.className = 'form-element';
+    inserct_url_input_div.appendChild(inserct_url_imput);
+
+
     var output_format_div = document.createElement("div");
     output_format_div.innerText = 'Output Format';
     var input_output_format_div = document.createElement("div");
@@ -288,6 +300,8 @@ function new_form(num_form) {
     parent_div.appendChild(choos_file_text_div);
     parent_div.appendChild(input_file_text_div);
 
+    parent_div.appendChild(inserct_url_div);
+    parent_div.appendChild(inserct_url_input_div);
 
     parent_div.appendChild(output_format_div);
     parent_div.appendChild(input_output_format_div);
@@ -342,6 +356,7 @@ function load_codecs_multiple(num_id = '') {
 function click_ok_btn_multiple(num_form = '') {
 
     var input_file_id = "input[id=file]".replace("file", "file" + num_form);
+    var id_video_url = "#video_url" + num_form;
     var id_output_format = "#output_format" + num_form + " option:selected";
     var video_codec_id = "#video_codec" + num_form + " option:selected";
     var destination_id = "#" + get_name_id_element('destination', num_form);
@@ -368,8 +383,10 @@ function click_ok_btn_multiple(num_form = '') {
         var data = [];
         var file_input = $(input_file_id).get(0);
         if (file_input.files.length == 0) {
-            alert("Select files");
-            return;
+            data.push({
+                "source": $(id_video_url).val(),
+                "format": [format]
+            });
         } else {
 
             for (var i = 0; i < file_input.files.length; ++i) {
@@ -397,16 +414,25 @@ function click_ok_btn_multiple(num_form = '') {
 
 
 async function run_qencode_multiple(data, options) {
+    var name = '';
+    if (data.file) {
+        name = data.file.name;
+    } else {
+        var url = data.source.split("/");
+        var file_uuid = url[url.length - 1];
+        name = file_uuid;
+    }
     var ss = new Qencode(token, {
         "query": data
     }, options);
     qencode_arr.push(ss);
     var is_good = ss.create_task(function(start_response) {
         if (!start_response.error) {
+
             ss.status({
                     token: start_response.task_token,
                     url: start_response.status_url,
-                    filename: data.file.name
+                    filename: name
                 },
                 poll_job_status_multiple_uploads
             );
@@ -422,7 +448,7 @@ async function run_qencode_multiple(data, options) {
                 ss.status({
                         token: start_response.task_token,
                         url: start_response.status_url,
-                        filename: data.file.name
+                        filename: name
                     },
                     poll_job_status_multiple_uploads
                 );
