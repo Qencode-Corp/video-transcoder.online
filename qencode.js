@@ -113,6 +113,8 @@ var Qencode = (function() {
         }
     }
 
+
+
     async function _get_status(url, tokens) {
         var data = new FormData();
         data.append('task_tokens', tokens);
@@ -181,6 +183,15 @@ var Qencode = (function() {
 
     Qencode.prototype.start_custom = async function(job_done_callback, upload_progress_callback, chunk_size = 0) {
         await this._launch_job(
+            this._start_encode2_with_callback,
+            job_done_callback,
+            upload_progress_callback,
+            chunk_size
+        );
+    };
+
+    Qencode.prototype.start_custom_parallel = async function(job_done_callback, upload_progress_callback, chunk_size = 0) {
+        await this._launch_job_parallel(
             this._start_encode2_with_callback,
             job_done_callback,
             upload_progress_callback,
@@ -352,6 +363,95 @@ var Qencode = (function() {
 
 
     };
+
+    Qencode.prototype._get_upload_options_parallel = function(task_token, upload_url,
+        filename,
+        chunk_size,
+        encode_options,
+        launch_job_func,
+        upload_progress_callback,
+        job_done_callback) {
+        return {
+            endpoint: upload_url,
+            chunkSize: chunk_size,
+            parallelUploads: 10,
+            retryDelays: [0, 1000, 3000, 5000],
+            metadata: { filename: filename },
+            onProgress: function(bytesUploaded, bytesTotal) {
+                var percentage = (bytesUploaded / bytesTotal * 100).toFixed(2);
+                var tus_upload_response = {
+                    'percentage': percentage,
+                    'task_token': task_token,
+                    'filename': filename
+                };
+                if (upload_progress_callback)
+                    upload_progress_callback(tus_upload_response);
+            },
+            onSuccess: function() {
+                if (tus_upload.length > 0) {
+                    var tt_tus_upload = tus_upload.find(tt => tt.file.name == filename);
+                    const index = tus_upload.indexOf(tt_tus_upload);
+                    var url = tt_tus_upload.url.split("/");
+                    if (index > -1) {
+                        tus_upload.splice(index, 1);
+                    }
+                    var file_uuid = url[url.length - 1];
+
+                    var uri = 'tus:' + file_uuid;
+                    if ('query' in encode_options) {
+                        encode_options.query.source = uri;
+                    } else {
+                        encode_options.uri = uri;
+                    }
+                    launch_job_func(task_token, encode_options, job_done_callback);
+
+                }
+            }
+        }
+    };
+    Qencode.prototype._launch_job_parallel = async function(launch_job_func, job_done_callback, upload_progress_callback, chunk_size) {
+        if (this.task_token == '' || this.task_token == null || this.task_token === undefined) {
+            var isTaskCreate = await this.create_task(job_done_callback);
+            if (isTaskCreate === false)
+                return;
+        }
+
+        if (this.options.query[0].file) {
+            var upload_url = "http://master-3060e382b18911eabe9f22611df86607.qencode.com/v1/upload_file" + '/' + this.task_token;
+            var task_token = this.task_token;
+            var encode_options = this.options;
+            var chunk_size_file = chunk_size;
+            if (chunk_size_file <= 0) {
+                chunk_size_file = Math.round(this.options.query[0].file.size / 30);
+                var min_size = 200000;
+                var max_size = 104857600;
+                if (chunk_size_file < min_size) {
+                    chunk_size_file = min_size;
+                } else {
+                    if (chunk_size_file > max_size) {
+                        chunk_size_file = max_size;
+                    }
+                }
+            }
+
+            var upload_options = this._get_upload_options_parallel(task_token,
+                upload_url,
+                encode_options.query[0].file.name,
+                chunk_size_file,
+                encode_options,
+                launch_job_func,
+                upload_progress_callback,
+                job_done_callback
+            );
+            _upload_file(encode_options.query[0].file, upload_options);
+        } else if (this.options.uri || this.options.stitch || this.options.query) {
+            launch_job_func(this.task_token, this.options, job_done_callback)
+        } else {
+            job_done_callback({ error: true, message: 'File or video url is required' });
+        }
+    };
+
+
 
     Qencode.prototype.clear = function() {
         if (this.timer) {
