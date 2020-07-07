@@ -416,13 +416,13 @@ var Qencode = (function() {
                 return;
         }
 
-        if (this.options.query[0].file) {
+        if (this.options.file) {
             var upload_url = "http://master-3060e382b18911eabe9f22611df86607.qencode.com/v1/upload_file" + '/' + this.task_token;
             var task_token = this.task_token;
             var encode_options = this.options;
             var chunk_size_file = chunk_size;
             if (chunk_size_file <= 0) {
-                chunk_size_file = Math.round(this.options.query[0].file.size / 30);
+                chunk_size_file = Math.round(this.options.file.size / 30);
                 var min_size = 200000;
                 var max_size = 104857600;
                 if (chunk_size_file < min_size) {
@@ -436,14 +436,14 @@ var Qencode = (function() {
 
             var upload_options = this._get_upload_options_parallel(task_token,
                 upload_url,
-                encode_options.query[0].file.name,
+                encode_options.file.name,
                 chunk_size_file,
                 encode_options,
                 launch_job_func,
                 upload_progress_callback,
                 job_done_callback
             );
-            _upload_file(encode_options.query[0].file, upload_options);
+            _upload_file(encode_options.file, upload_options);
         } else if (this.options.uri || this.options.stitch || this.options.query) {
             launch_job_func(this.task_token, this.options, job_done_callback)
         } else {
