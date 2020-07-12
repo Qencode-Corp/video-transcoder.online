@@ -282,7 +282,7 @@
         });
         if (is_good) {
             add_progress_bar(ss.task_token);
-            ss.start_custom_parallel(function(start_response) {
+            ss.start_custom(function(start_response) {
                 if (!start_response.error) {
                     ss.status({
                             token: start_response.task_token,
@@ -295,7 +295,7 @@
                     console.log("Error!!!")
                     console.log(start_response)
                 }
-            }, update_multiple_upload_progress);
+            }, update_multiple_upload_progress, 0, 10);
         }
 
     }
