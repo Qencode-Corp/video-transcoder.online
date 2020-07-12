@@ -93,7 +93,7 @@
             </div>
 
             <div>
-                <button id="btn_ok" class="form-element">OK</button>
+                <button id="btn_ok2" class="form-element">OK</button>
             </div>
 
             <div>
@@ -118,6 +118,8 @@
 
 <script src="common.js"></script>
 <script>
+    var btn = document.getElementById("btn_ok2");
+    btn.addEventListener("click", click_ok_btn);
     var webm_codecs = {
         "VP8": "libvpx",
         "VP9": "libvpx-vp9"
@@ -170,13 +172,13 @@
     };
 
     var qencode_arr = [];
-    $("#btn_ok").click(
-        click_ok_btn()
-    );
+
 
     function click_ok_btn() {
 
+
         if (token != '') {
+
             var output_format = $("#output_format option:selected").val();
             var format = {
                 "output": $("#output_format option:selected").val(),
@@ -244,6 +246,7 @@
                 run_qencode(data[i], options)
             }
         }
+
     }
 
 

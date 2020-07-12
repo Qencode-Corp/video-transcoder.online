@@ -171,7 +171,7 @@
 
     var qencode_arr = [];
     $("#btn_ok").click(
-        click_ok_btn()
+        click_ok_btn
     );
 
     function click_ok_btn() {
@@ -249,6 +249,7 @@
 
 
     async function run_qencode(data, options) {
+
         var name = '';
         if (data.file) {
             name = data.file.name;
