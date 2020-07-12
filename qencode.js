@@ -190,14 +190,7 @@ var Qencode = (function() {
         );
     };
 
-    Qencode.prototype.start_custom_parallel = async function(job_done_callback, upload_progress_callback, chunk_size = 0) {
-        await this._launch_job_parallel(
-            this._start_encode2_with_callback,
-            job_done_callback,
-            upload_progress_callback,
-            chunk_size
-        );
-    };
+
 
     Qencode.prototype.create_task = async function(job_done_callback) {
         var token = this.options.token;
