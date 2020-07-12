@@ -417,7 +417,7 @@ var Qencode = (function() {
         }
 
         if (this.options.file) {
-            var upload_url = "http://master-3060e382b18911eabe9f22611df86607.qencode.com/v1/upload_file" + '/' + this.task_token;
+            var upload_url = this.upload_url + '/' + this.task_token;
             var task_token = this.task_token;
             var encode_options = this.options;
             var chunk_size_file = chunk_size;
