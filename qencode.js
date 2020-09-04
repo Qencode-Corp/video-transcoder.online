@@ -190,6 +190,32 @@ var Qencode = (function() {
         );
     };
 
+    Qencode.prototype.get_metadata - async function(video_url, job_done_callback) {
+        var params = {
+            "query": {
+                "source": video_url,
+                "format": [{ "output": "metadata", "metadata_version": "4.1.5" }]
+            }
+        };
+
+        var token = this.options.token;
+        var create_task_response = await _create_task(this.options.endpoint + '/v1/create_task', token);
+        this.task_token = create_task_response.task_token;
+        this.upload_url = create_task_response.upload_url;
+        if (create_task_response.error) {
+            job_done_callback(create_task_response);
+        }
+        this._start_encode2(options.endpoint + '/v1/start_encode2',
+            task_token,
+            options
+        ).then((start_encode_response) => {
+            _process_launch_job_callback(this.task_token, start_encode_response, job_done_callback);
+        });
+
+
+
+    }
+
 
 
     Qencode.prototype.create_task = async function(job_done_callback) {

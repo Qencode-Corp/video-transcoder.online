@@ -32,6 +32,71 @@ function update_multiple_upload_progress(upload_progress) {
     }
 }
 
+function poll_job_status_multiple_uploads_metadata(task_token, response, filename) {
+    var id_progress_bar = '#progress-bar_' + task_token;
+    var id_progress_bar_0 = '#progress-bar-0_' + task_token;
+    var id_a = '#link_' + task_token;
+    var status_or = response.statuses[task_token].status;
+    var status = status_or.charAt(0).toUpperCase() + status_or.slice(1);
+    var percent = response.statuses[task_token].percent;
+    if (percent == 0) {
+        $(id_progress_bar).hide();
+        $(id_progress_bar_0).show();
+        $(id_progress_bar_0).css("width", "100%").text(status + ": 0%");
+    } else {
+        $(id_progress_bar_0).hide();
+        $(id_progress_bar).show();
+        $(id_progress_bar).css("width", percent + "%").text('Status ' + filename + ' - ' + status + ": " + percent.toFixed(2) + " %");
+        if (status_or == "completed" && response.statuses[task_token].videos.length > 0) {
+            var manifestUri = '';
+            var jsonUrl = '';
+            response.statuses[task_token].videos.forEach(item => {
+                if (item.tag.indexOf("metadata") === 0) {
+                    jsonUrl = item.url;
+                    const response2 = fetch(jsonUrl).then((response) => {
+                            if (response.ok) {
+                                console.log("OK")
+                                return response.json();
+                            } else {
+                                console.log("Error")
+                                console.log(response.json())
+                                return {};
+                            }
+
+                        })
+                        .then((data) => {
+                            var str = JSON.stringify(data, undefined, 4);
+
+                            var inhtml = document.getElementById('myTextArea').innerHTML;
+                            // display pretty printed object in text area:
+                            document.getElementById('myTextArea').innerHTML = inhtml + str;
+                            document.getElementById('myTextArea').style.display = "block";
+                        });
+                } else {
+                    manifestUri = item.url;
+
+                }
+            });
+
+            $(id_a).text('Download ' + filename).attr("href", manifestUri);
+            $(id_a).show();
+            console.log('Output video url: ' + manifestUri);
+            if (qencode_arr.length == 1) {
+                $('#video').css("display", "block");
+                if (manifestUri.endsWith('.mpd') || manifestUri.endsWith('.m3u8')) {
+                    initApp();
+                } else {
+                    var video = $('#video')[0];
+                    video.src = manifestUri;
+                    video.load();
+                    video.play();
+                }
+            }
+        }
+    }
+}
+
+
 function poll_job_status_multiple_uploads(task_token, response, filename) {
     var id_progress_bar = '#progress-bar_' + task_token;
     var id_progress_bar_0 = '#progress-bar-0_' + task_token;
@@ -66,6 +131,7 @@ function poll_job_status_multiple_uploads(task_token, response, filename) {
         }
     }
 }
+
 
 
 
@@ -151,6 +217,8 @@ function clear_previous_job_miltiple_uploads(qencode_arr) {
     }
     qencode_arr = [];
     $('#video').css("display", "none");
+    document.getElementById('myTextArea').innerHTML = "";
+    document.getElementById('myTextArea').style.display = "none";
 }
 
 
